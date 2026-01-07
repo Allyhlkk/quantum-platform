@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>CHSH 不等式与非定域性分析</h2>
+
+<form method="post" class="card">
+    <label>A:</label><input name="a" required>
+    <label>A′:</label><input name="a_p" required>
+    <label>B:</label><input name="b" required>
+    <button type="submit">计算</button>
+</form>
+
+{% if result %}
+<div class="card">
+    <p>最大 |S|：{{ result.S_max }}</p>
+    <p>{{ result.explanation }}</p>
+    <img src="data:image/png;base64,{{ result.plot }}">
+</div>
+{% endif %}
+
+{% endblock %}

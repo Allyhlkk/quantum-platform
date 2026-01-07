@@ -1,0 +1,151 @@
+body {
+    margin: 0;
+    font-family: "Segoe UI", "PingFang SC", Arial, sans-serif;
+    background: linear-gradient(135deg, #F4F5FB, #ECEEFF);
+    color: #2C2F4A;
+}
+
+/* ===== Header ===== */
+.header {
+    background: linear-gradient(135deg, #7B6CF6, #B8A8FF);
+    color: white;
+    padding: 36px 20px;
+    text-align: center;
+}
+
+.header-title {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.header-subtitle {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-top: 6px;
+}
+
+/* ===== Nav ===== */
+.nav {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(6px);
+    padding: 14px 0;
+    text-align: center;
+    box-shadow: 0 6px 16px rgba(123,108,246,0.15);
+}
+
+.nav a {
+    margin: 0 22px;
+    text-decoration: none;
+    color: #7B6CF6;
+    font-weight: 500;
+    position: relative;
+}
+
+.nav a::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 2px;
+    background: #7B6CF6;
+    left: 0;
+    bottom: -6px;
+    transition: width 0.3s;
+}
+
+.nav a:hover::after {
+    width: 100%;
+}
+
+/* ===== Layout ===== */
+.container {
+    max-width: 1050px;
+    margin: 50px auto;
+    padding: 0 20px;
+}
+
+/* ===== Card ===== */
+.card {
+    background: #FFFFFF;
+    border-radius: 14px;
+    padding: 26px;
+    margin-bottom: 32px;
+    box-shadow:
+        0 8px 24px rgba(44,47,74,0.08),
+        0 0 0 1px #E0E3FF;
+}
+
+.card-title {
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    color: #2C2F4A;
+    border-left: 4px solid #7B6CF6;
+    padding-left: 12px;
+    text-shadow: 0 0 6px rgba(123,108,246,0.35);
+}
+
+/* ===== Form ===== */
+label {
+    display: block;
+    margin-top: 14px;
+    font-size: 14px;
+}
+
+input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 6px;
+    border-radius: 8px;
+    border: 1px solid #D6DAFF;
+    background: #FAFBFF;
+}
+
+input:focus {
+    outline: none;
+    border-color: #7B6CF6;
+}
+
+/* ===== Button ===== */
+button {
+    margin-top: 22px;
+    padding: 12px 22px;
+    background: linear-gradient(135deg, #7B6CF6, #9A8CFF);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 6px 14px rgba(123,108,246,0.35);
+}
+
+button:hover {
+    opacity: 0.95;
+}
+
+/* ===== Result ===== */
+.result {
+    line-height: 1.8;
+    font-size: 15px;
+}
+
+.error {
+    color: #C62828;
+    font-weight: 500;
+}
+
+/* ===== Footer ===== */
+.footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    color: #777;
+}
+
+#bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none; /* 不抢鼠标 */
+}
+

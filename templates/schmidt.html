@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <div class="card-title">Schmidt 分解（两比特纯态）</div>
+
+    <form method="post">
+        <label>a</label><input name="a" required>
+        <label>b</label><input name="b" required>
+        <label>c</label><input name="c" required>
+        <label>d</label><input name="d" required>
+
+        <button type="submit">计算 Schmidt 分解</button>
+    </form>
+</div>
+
+{% if error %}
+<div class="card error">{{ error }}</div>
+{% endif %}
+
+{% if result %}
+<div class="card">
+    <div class="card-title">计算结果</div>
+    <div class="result">
+        <p>Schmidt 系数：{{ result.coeffs }}</p>
+        <p>Schmidt 秩：{{ result.rank }}</p>
+        <p><b>{{ result.explanation }}</b></p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

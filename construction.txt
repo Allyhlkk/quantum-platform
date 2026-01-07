@@ -1,0 +1,36 @@
+quantum-platform/
+│
+├─ app.py                  # Flask 启动入口（极薄）
+├─ config.py               # 配置
+├─ requirements.txt
+│
+├─ routes/                 # 路由层（HTTP）
+│   ├─ __init__.py
+│   ├─ main.py
+│   ├─ schmidt.py
+│   ├─ chsh.py
+│
+├─ services/               # 业务逻辑层（系统核心）
+│   ├─ schmidt_service.py
+│   ├─ chsh_service.py
+│
+├─ quantum/                # 量子数学（纯算法）
+│   ├─ __init__.py
+│   ├─ states.py
+│   ├─ schmidt.py
+│   ├─ chsh.py
+│
+├─ visualization/          # 可视化
+│   ├─ chsh_plot.py
+│
+├─ utils/
+│   └─ explain.py          # 自动中文解释
+│
+├─ templates/
+│   ├─ base.html
+│   ├─ index.html
+│   ├─ schmidt.html
+│   └─ chsh.html
+│
+└─ static/
+    └─ style.css
