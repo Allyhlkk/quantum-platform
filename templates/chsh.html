@@ -1,21 +1,221 @@
 {% extends "base.html" %}
+{% block title %}CHSH Experiment{% endblock %}
+
 {% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    $$S = |E(a,b) + E(a,b') + E(a',b) - E(a',b')|$$
 
-<h2>CHSH 不等式与非定域性分析</h2>
+    $$E(a,b) = \langle \psi^- | (\vec{a}\cdot\vec{\sigma})
+    \otimes (\vec{b}\cdot\vec{\sigma}) | \psi^- \rangle$$
+  </div>
 
-<form method="post" class="card">
-    <label>A:</label><input name="a" required>
-    <label>A′:</label><input name="a_p" required>
-    <label>B:</label><input name="b" required>
-    <button type="submit">计算</button>
-</form>
-
-{% if result %}
-<div class="card">
-    <p>最大 |S|：{{ result.S_max }}</p>
-    <p>{{ result.explanation }}</p>
-    <img src="data:image/png;base64,{{ result.plot }}">
+  <div class="formula-bound">
+    <span>$$Classical bound: S \le 2$$</span>
+    <span class="sep">$$|$$</span>
+    <span>$$Quantum bound: S \le 2\sqrt{2}$$</span>
+  </div>
 </div>
-{% endif %}
 
+
+<div class="card experiment-panel">
+
+  <h2>CHSH Nonlocality Experiment</h2>
+
+  <!-- ========= 阶段 1：初始化 ========= -->
+  <div id="init-panel">
+    <label>
+      a
+      <input type="number" step="0.01" id="init-a" value="0">
+    </label>
+    <label>
+      a′
+      <input type="number" step="0.01" id="init-a_p" value="1.57">
+    </label>
+    <label>
+      b
+      <input type="number" step="0.01" id="init-b" value="0.78">
+    </label>
+
+    <button type="button" onclick="startExperiment()">
+      ▶ Start Experiment
+    </button>
+  </div>
+
+  <!-- ========= 阶段 2：实验台 ========= -->
+  <div id="experiment-panel" style="display:none;">
+
+    <div class="controls">
+      <label>
+        a
+        <input type="range" min="0" max="6.28" step="0.01" id="a">
+        <span id="a_val"></span>
+      </label>
+
+      <label>
+        a′
+        <input type="range" min="0" max="6.28" step="0.01" id="a_p">
+        <span id="a_p_val"></span>
+      </label>
+
+      <label>
+        b
+        <input type="range" min="0" max="6.28" step="0.01" id="b">
+        <span id="b_val"></span>
+      </label>
+    </div>
+
+    <canvas id="chsh-canvas" width="600" height="400"></canvas>
+
+    <p id="chsh-info"></p>
+    <p id="chsh-explain"></p>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  /* ========= 基本配置 ========= */
+  const sliders = ["a", "a_p", "b"];
+  const canvas = document.getElementById("chsh-canvas");
+  const ctx = canvas.getContext("2d");
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const PAD = 50;
+  const Y_MAX = 2.8;
+
+  /* ========= 坐标系（固定） ========= */
+  function drawAxes() {
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = "#aaa";
+    ctx.lineWidth = 1;
+    ctx.font = "12px sans-serif";
+    ctx.fillStyle = "#aaa";
+
+    /* ===== 坐标轴 ===== */
+    ctx.beginPath();
+    ctx.moveTo(PAD, PAD);
+    ctx.lineTo(PAD, H - PAD);
+    ctx.lineTo(W - PAD, H - PAD);
+    ctx.stroke();
+
+    /* ===== X 轴刻度（0 → 2π） ===== */
+    const xTicks = [
+      { v: 0, label: "0" },
+      { v: Math.PI / 2, label: "π/2" },
+      { v: Math.PI, label: "π" },
+      { v: 3 * Math.PI / 2, label: "3π/2" },
+      { v: 2 * Math.PI, label: "2π" },
+    ];
+
+    xTicks.forEach(t => {
+      const x = PAD + (t.v / (2 * Math.PI)) * (W - 2 * PAD);
+
+      ctx.beginPath();
+      ctx.moveTo(x, H - PAD);
+      ctx.lineTo(x, H - PAD + 6);
+      ctx.stroke();
+
+      ctx.fillText(t.label, x - 8, H - PAD + 20);
+    });
+
+    /* ===== Y 轴刻度（S 值） ===== */
+    const yTicks = [0, 1, 2, 2.5];
+
+    yTicks.forEach(v => {
+      const y = H - PAD - (v / Y_MAX) * (H - 2 * PAD);
+
+      ctx.beginPath();
+      ctx.moveTo(PAD - 6, y);
+      ctx.lineTo(PAD, y);
+      ctx.stroke();
+
+      ctx.fillText(v.toString(), PAD - 28, y + 4);
+    });
+
+    /* ===== Bell 不等式上界 S = 2 ===== */
+    const yBell = H - PAD - (2 / Y_MAX) * (H - 2 * PAD);
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(PAD, yBell);
+    ctx.lineTo(W - PAD, yBell);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillText("S = 2", PAD + 5, yBell - 6);
+
+    /* ===== 轴标签 ===== */
+    ctx.fillText("b′ (rad)", W / 2 - 20, H - 10);
+    ctx.save();
+    ctx.translate(12, H / 2 + 20);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("CHSH S value", 0, 0);
+    ctx.restore();
+  }
+
+
+  /* ========= 曲线绘制 ========= */
+  function drawCurve(theta, S_vals) {
+    drawAxes();
+
+    ctx.strokeStyle = "#ff78b4";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    S_vals.forEach((S, i) => {
+      const x = PAD + (theta[i] / (2 * Math.PI)) * (W - 2 * PAD);
+      const y = H - PAD - (S / Y_MAX) * (H - 2 * PAD);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+
+    ctx.stroke();
+  }
+
+  /* ========= 启动实验 ========= */
+  window.startExperiment = function () {
+    sliders.forEach(id => {
+      document.getElementById(id).value =
+        document.getElementById("init-" + id).value;
+      document.getElementById(id)
+        .addEventListener("input", updateCHSH);
+    });
+
+    document.getElementById("init-panel").style.display = "none";
+    document.getElementById("experiment-panel").style.display = "block";
+
+    drawAxes();
+    updateCHSH();
+  };
+
+  /* ========= 实时更新 ========= */
+  function updateCHSH() {
+    sliders.forEach(id => {
+      document.getElementById(id + "_val").innerText =
+        Number(document.getElementById(id).value).toFixed(2);
+    });
+
+    const a = document.getElementById("a").value;
+    const a_p = document.getElementById("a_p").value;
+    const b = document.getElementById("b").value;
+
+    fetch(`/chsh/api?a=${a}&a_p=${a_p}&b=${b}`)
+      .then(res => res.json())
+      .then(data => {
+        drawCurve(data.theta, data.S_vals);
+
+        document.getElementById("chsh-info").innerText =
+          `S_max = ${data.S_max} (${data.violation ? "Violation of Bell inequality" : "No violation"})`;
+
+        document.getElementById("chsh-explain").innerText =
+          data.explanation;
+      });
+  }
+
+});
+</script>
 {% endblock %}

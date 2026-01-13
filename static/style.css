@@ -149,3 +149,63 @@ button:hover {
     pointer-events: none; /* 不抢鼠标 */
 }
 
+.experiment-panel {
+    max-width: 800px;
+    margin: auto;
+}
+
+.controls label {
+    display: block;
+    margin: 12px 0;
+}
+
+.controls input[type="range"] {
+    width: 60%;
+    margin: 0 10px;
+}
+
+.result img {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.formula-panel {
+  margin: 20px auto 30px;
+  padding: 18px 22px;
+  max-width: 900px;
+
+  background: rgba(30, 28, 60, 0.55);
+  border: 1px solid rgba(123, 108, 246, 0.35);
+  border-radius: 14px;
+
+  box-shadow:
+    inset 0 0 25px rgba(123,108,246,0.15),
+    0 0 25px rgba(123,108,246,0.25);
+
+  text-align: center;
+}
+
+.formula-block {
+  color: #e8e6ff;
+  font-size: 1.05em;
+  margin-bottom: 12px;
+}
+
+.formula-block mjx-container {
+  margin: 10px 0 !important;
+}
+
+.formula-bound {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+
+  font-size: 0.9em;
+  color: #ffb6d9;
+  opacity: 0.9;
+}
+
+.formula-bound .sep {
+  color: rgba(255,255,255,0.4);
+}

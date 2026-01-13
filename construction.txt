@@ -4,6 +4,12 @@ quantum-platform/
 ├─ config.py               # 配置
 ├─ requirements.txt
 │
+├─ quantum/                # 量子数学（纯算法）
+│   ├─ __init__.py
+│   ├─ states.py
+│   ├─ schmidt.py
+│   ├─ chsh.py
+│
 ├─ routes/                 # 路由层（HTTP）
 │   ├─ __init__.py
 │   ├─ main.py
@@ -14,14 +20,10 @@ quantum-platform/
 │   ├─ schmidt_service.py
 │   ├─ chsh_service.py
 │
-├─ quantum/                # 量子数学（纯算法）
-│   ├─ __init__.py
-│   ├─ states.py
-│   ├─ schmidt.py
-│   ├─ chsh.py
-│
-├─ visualization/          # 可视化
-│   ├─ chsh_plot.py
+├─ static/
+│   ├─ effects.css
+│   ├─ particles.js
+│   └─ style.css
 │
 ├─ utils/
 │   └─ explain.py          # 自动中文解释
@@ -32,5 +34,73 @@ quantum-platform/
 │   ├─ schmidt.html
 │   └─ chsh.html
 │
+└─ visualization/          # 可视化
+   ├─ chsh_plot.py
+
+
+
+quantum-platform/
+│
+├─ app.py
+├─ config.py
+│
+├─ core/                         # ⭐ 核心领域层（Domain Layer）
+│   │
+│   ├─ states/                   # 量子态（输入对象）
+│   │   ├─ base.py
+│   │   ├─ pure.py
+│   │   ├─ bell.py
+│   │   └─ werner.py
+│   │
+│   ├─ channels/                 # 量子信道 / 噪声
+│   │   ├─ base.py
+│   │   ├─ depolarizing.py
+│   │   └─ phase_damping.py
+│   │
+│   ├─ observables/              # ⭐ 可观测量 / 算符
+│   │   ├─ pauli.py
+│   │   └─ measurement.py
+│   │
+│   ├─ formulas/                 # ⭐⭐⭐ 一切“公式”的核心位置
+│   │   ├─ __init__.py
+│   │   │
+│   │   ├─ structure/            # 结构类公式
+│   │   │   ├─ schmidt.py
+│   │   │   └─ schmidt_rank.py
+│   │   │
+│   │   ├─ criteria/             # 判据类公式
+│   │   │   ├─ chsh.py
+│   │   │   ├─ ppt.py
+│   │   │   └─ witness.py
+│   │   │
+│   │   └─ measures/             # 纠缠量
+│   │       ├─ concurrence.py
+│   │       └─ negativity.py
+│   │
+│   ├─ results.py                # 统一分析结果结构
+│   │
+│   └─ registry.py               # ⭐ 公式注册表（非常关键）
+│
+├─ services/                     # ⭐ 系统调度层
+│   ├─ pipeline.py               # 一次完整分析流程
+│   ├─ analysis_service.py       # 通用分析入口
+│   └─ sweep_service.py          # 参数扫描 / 噪声扫描
+│
+├─ visualization/
+│   ├─ base.py
+│   ├─ heatmap.py
+│   ├─ curve.py
+│   └─ surface.py
+│
+├─ routes/
+│   ├─ main.py
+│   └─ analysis.py               # ⭐ 不再按公式分 route
+│
+├─ templates/
+│   ├─ index.html
+│   └─ analysis.html
+│
+├─ utils/
+│   └─ explain.py
+│
 └─ static/
-    └─ style.css
