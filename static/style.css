@@ -1,3 +1,6 @@
+/* ==============================
+   全局样式
+   ============================== */
 body {
     margin: 0;
     font-family: "Segoe UI", "PingFang SC", Arial, sans-serif;
@@ -5,7 +8,14 @@ body {
     color: #2C2F4A;
 }
 
-/* ===== Header ===== */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ==============================
+   Header
+   ============================== */
 .header {
     background: linear-gradient(135deg, #7B6CF6, #B8A8FF);
     color: white;
@@ -25,7 +35,9 @@ body {
     margin-top: 6px;
 }
 
-/* ===== Nav ===== */
+/* ==============================
+   Nav
+   ============================== */
 .nav {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(6px);
@@ -36,8 +48,6 @@ body {
 
 .nav a {
     margin: 0 22px;
-    text-decoration: none;
-    color: #7B6CF6;
     font-weight: 500;
     position: relative;
 }
@@ -57,14 +67,18 @@ body {
     width: 100%;
 }
 
-/* ===== Layout ===== */
+/* ==============================
+   Container
+   ============================== */
 .container {
     max-width: 1050px;
     margin: 50px auto;
     padding: 0 20px;
 }
 
-/* ===== Card ===== */
+/* ==============================
+   Card
+   ============================== */
 .card {
     background: #FFFFFF;
     border-radius: 14px;
@@ -85,7 +99,9 @@ body {
     text-shadow: 0 0 6px rgba(123,108,246,0.35);
 }
 
-/* ===== Form ===== */
+/* ==============================
+   Form
+   ============================== */
 label {
     display: block;
     margin-top: 14px;
@@ -106,7 +122,9 @@ input:focus {
     border-color: #7B6CF6;
 }
 
-/* ===== Button ===== */
+/* ==============================
+   Button
+   ============================== */
 button {
     margin-top: 22px;
     padding: 12px 22px;
@@ -123,45 +141,22 @@ button:hover {
     opacity: 0.95;
 }
 
-/* ===== Result ===== */
+.btn-primary {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 14px;
+    background: #ff78b4;
+    color: #000;
+    text-decoration: none;
+    border-radius: 6px;
+}
+
+/* ==============================
+   Result / 图片
+   ============================== */
 .result {
     line-height: 1.8;
     font-size: 15px;
-}
-
-.error {
-    color: #C62828;
-    font-weight: 500;
-}
-
-/* ===== Footer ===== */
-.footer {
-    text-align: center;
-    padding: 20px;
-    font-size: 12px;
-    color: #777;
-}
-
-#bg-canvas {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none; /* 不抢鼠标 */
-}
-
-.experiment-panel {
-    max-width: 800px;
-    margin: auto;
-}
-
-.controls label {
-    display: block;
-    margin: 12px 0;
-}
-
-.controls input[type="range"] {
-    width: 60%;
-    margin: 0 10px;
 }
 
 .result img {
@@ -169,6 +164,34 @@ button:hover {
     margin-top: 20px;
 }
 
+.error {
+    color: #C62828;
+    font-weight: 500;
+}
+
+/* ==============================
+   Footer
+   ============================== */
+.footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    color: #777;
+}
+
+/* ==============================
+   背景 Canvas
+   ============================== */
+#bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* ==============================
+   Formula 面板
+   ============================== */
 .formula-panel {
   margin: 20px auto 30px;
   padding: 18px 22px;
@@ -208,4 +231,65 @@ button:hover {
 
 .formula-bound .sep {
   color: rgba(255,255,255,0.4);
+}
+
+/* ==============================
+   analysis 布局
+   ============================== */
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+.analysis-layout {
+  display: flex;
+  height: 100vh;  /* 填满浏览器高度 */
+  gap: 10px;
+}
+
+.analysis-sidebar {
+  width: 250px;      /* 左侧固定宽度 */
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.analysis-workspace {
+  flex-grow: 1;       /* 占剩余宽度 */
+  display: flex;
+  flex-direction: column;
+}
+
+.analysis-frame {
+  flex-grow: 1;      /* 占满 workspace 的剩余高度 */
+  width: 100%;       /* 填满 workspace 宽度 */
+  border: none;
+}
+
+/* ==============================
+   analysis 左侧列表
+   ============================== */
+.anal-group-title {
+  font-weight: bold;
+  margin-top: 10px;
+  color: #aaa;
+}
+
+.anal-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.anal-item {
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.anal-item:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.anal-group.disabled {
+  opacity: 0.4;
 }

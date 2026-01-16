@@ -86,21 +86,34 @@ quantum-platform/
 │   ├─ analysis_service.py       # 通用分析入口
 │   └─ sweep_service.py          # 参数扫描 / 噪声扫描
 │
-├─ visualization/
-│   ├─ base.py
-│   ├─ heatmap.py
-│   ├─ curve.py
-│   └─ surface.py
-│
 ├─ routes/
 │   ├─ main.py
 │   └─ analysis.py               # ⭐ 不再按公式分 route
 │
 ├─ templates/
 │   ├─ index.html
-│   └─ analysis.html
+│   ├─ base.html
+│   ├─ analysis.html
+│   └─formulas
+│        ├─ formulas_base.html
+│        ├─ schmidt.html
+│        └─ chsh.html
 │
 ├─ utils/
 │   └─ explain.py
+│
+visualization/
+├─ base.py                     # 公共工具
+├─ renderers/
+│   ├─ curve.py                # ⭐ 通用曲线渲染器
+│   ├─ heatmap.py              # 二维热图
+│   └─ surface.py              # 三维曲面
+├─ styles/
+│   ├─ default.py
+│   ├─ chsh.py
+│   ├─ schmidt.py
+│   └─ werner.py
+├─ overlays/
+│   └─ bell_bound.py           # ⭐ Bell 不等式语义
 │
 └─ static/

@@ -1,5 +1,5 @@
-{% extends "base.html" %}
-{% block title %}CHSH Experiment{% endblock %}
+{% extends "formulas/formulas_base.html" %}
+{% block title %}CHSH Analysis{% endblock %}
 
 {% block content %}
 <div class="formula-panel">
@@ -11,16 +11,15 @@
   </div>
 
   <div class="formula-bound">
-    <span>$$Classical bound: S \le 2$$</span>
+    <span>$$Classical\ bound:\ S \le 2$$</span>
     <span class="sep">$$|$$</span>
-    <span>$$Quantum bound: S \le 2\sqrt{2}$$</span>
+    <span>$$Quantum\ bound:\ S \le 2\sqrt{2}$$</span>
   </div>
 </div>
 
+<div class="card analysis-panel">
 
-<div class="card experiment-panel">
-
-  <h2>CHSH Nonlocality Experiment</h2>
+  <h2>CHSH Nonlocality Analysis</h2>
 
   <!-- ========= 阶段 1：初始化 ========= -->
   <div id="init-panel">
@@ -37,13 +36,13 @@
       <input type="number" step="0.01" id="init-b" value="0.78">
     </label>
 
-    <button type="button" onclick="startExperiment()">
-      ▶ Start Experiment
+    <button type="button" onclick="startAnalysis()">
+      ▶ Start Analysis
     </button>
   </div>
 
   <!-- ========= 阶段 2：实验台 ========= -->
-  <div id="experiment-panel" style="display:none;">
+  <div id="analysis-panel" style="display:none;">
 
     <div class="controls">
       <label>
@@ -78,7 +77,6 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* ========= 基本配置 ========= */
   const sliders = ["a", "a_p", "b"];
   const canvas = document.getElementById("chsh-canvas");
   const ctx = canvas.getContext("2d");
@@ -88,7 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const PAD = 50;
   const Y_MAX = 2.8;
 
-  /* ========= 坐标系（固定） ========= */
   function drawAxes() {
     ctx.clearRect(0, 0, W, H);
 
@@ -97,14 +94,12 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.font = "12px sans-serif";
     ctx.fillStyle = "#aaa";
 
-    /* ===== 坐标轴 ===== */
     ctx.beginPath();
     ctx.moveTo(PAD, PAD);
     ctx.lineTo(PAD, H - PAD);
     ctx.lineTo(W - PAD, H - PAD);
     ctx.stroke();
 
-    /* ===== X 轴刻度（0 → 2π） ===== */
     const xTicks = [
       { v: 0, label: "0" },
       { v: Math.PI / 2, label: "π/2" },
@@ -115,30 +110,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     xTicks.forEach(t => {
       const x = PAD + (t.v / (2 * Math.PI)) * (W - 2 * PAD);
-
       ctx.beginPath();
       ctx.moveTo(x, H - PAD);
       ctx.lineTo(x, H - PAD + 6);
       ctx.stroke();
-
       ctx.fillText(t.label, x - 8, H - PAD + 20);
     });
 
-    /* ===== Y 轴刻度（S 值） ===== */
     const yTicks = [0, 1, 2, 2.5];
-
     yTicks.forEach(v => {
       const y = H - PAD - (v / Y_MAX) * (H - 2 * PAD);
-
       ctx.beginPath();
       ctx.moveTo(PAD - 6, y);
       ctx.lineTo(PAD, y);
       ctx.stroke();
-
       ctx.fillText(v.toString(), PAD - 28, y + 4);
     });
 
-    /* ===== Bell 不等式上界 S = 2 ===== */
     const yBell = H - PAD - (2 / Y_MAX) * (H - 2 * PAD);
     ctx.setLineDash([6, 6]);
     ctx.beginPath();
@@ -146,10 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.lineTo(W - PAD, yBell);
     ctx.stroke();
     ctx.setLineDash([]);
-
     ctx.fillText("S = 2", PAD + 5, yBell - 6);
 
-    /* ===== 轴标签 ===== */
     ctx.fillText("b′ (rad)", W / 2 - 20, H - 10);
     ctx.save();
     ctx.translate(12, H / 2 + 20);
@@ -158,11 +144,8 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.restore();
   }
 
-
-  /* ========= 曲线绘制 ========= */
   function drawCurve(theta, S_vals) {
     drawAxes();
-
     ctx.strokeStyle = "#ff78b4";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -176,8 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.stroke();
   }
 
-  /* ========= 启动实验 ========= */
-  window.startExperiment = function () {
+  window.startAnalysis = function () {
     sliders.forEach(id => {
       document.getElementById(id).value =
         document.getElementById("init-" + id).value;
@@ -186,13 +168,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("init-panel").style.display = "none";
-    document.getElementById("experiment-panel").style.display = "block";
+    document.getElementById("analysis-panel").style.display = "block";
 
     drawAxes();
     updateCHSH();
   };
 
-  /* ========= 实时更新 ========= */
   function updateCHSH() {
     sliders.forEach(id => {
       document.getElementById(id + "_val").innerText =
@@ -203,7 +184,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const a_p = document.getElementById("a_p").value;
     const b = document.getElementById("b").value;
 
-    fetch(`/chsh/api?a=${a}&a_p=${a_p}&b=${b}`)
+    // ⭐⭐⭐ 关键修正：统一走 analysis API
+    fetch(`/analysis/api/chsh?a=${a}&a_p=${a_p}&b=${b}`)
       .then(res => res.json())
       .then(data => {
         drawCurve(data.theta, data.S_vals);

@@ -10,15 +10,9 @@
     
 <canvas id="bg-canvas"></canvas>
 
-<header class="header">
-    <!-- 点击返回主页 -->
-    <a href="{{ url_for('main.index') }}" style="text-decoration:none; color:inherit;">
-        <div class="header-title">Quantum Entanglement Platform</div>
-        <div class="header-subtitle">
-            量子纠缠分析与可视化平台
-        </div>
-    </a>
-</header>
+
+
+
 
 <main class="container">
     {% block content %}{% endblock %}
@@ -39,6 +33,7 @@ window.MathJax = {
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
 
 </body>
 </html>
