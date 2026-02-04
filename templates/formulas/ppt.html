@@ -1,0 +1,204 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}PPT Criterion{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    $$\rho_W = p|\Psi^-\rangle\langle\Psi^-| + \frac{1-p}{4}I$$
+    $$\rho^{T_B} \ge 0 \iff \text{separable}$$
+    $$\mathcal{N}(\rho) = \sum_{\lambda_i<0}|\lambda_i|$$
+  </div>
+</div>
+
+<div class="card analysis-panel">
+  <h2>PPT & Negativity Analysis (Werner State)</h2>
+
+  <div class="controls">
+    <label>
+      p
+      <input type="range" min="0" max="1" step="0.01" id="p">
+      <span id="p_val"></span>
+    </label>
+  </div>
+
+  <canvas id="ppt-canvas" width="600" height="400"></canvas>
+
+  <p id="ppt-info"></p>
+  <p id="ppt-explain"></p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const canvas = document.getElementById("ppt-canvas");
+  const ctx = canvas.getContext("2d");
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const PAD = 50;
+  const SCALE_Y = 150;
+
+  const slider = document.getElementById("p");
+  const pVal = document.getElementById("p_val");
+
+  // ===== 保存扫描数据（用于 marker）=====
+  let globalP = [];
+  let globalPPT = [];
+  let globalNEG = [];
+
+  function drawAxes() {
+    ctx.clearRect(0, 0, W, H);
+
+    const y0 = H / 2;
+
+    // ===== 半透明背景区域 =====
+    // separable (above)
+    ctx.fillStyle = "rgba(120, 200, 255, 0.15)";
+    ctx.fillRect(PAD, PAD, W - 2 * PAD, y0 - PAD);
+
+    // entangled (below)
+    ctx.fillStyle = "rgba(255, 120, 150, 0.15)";
+    ctx.fillRect(PAD, y0, W - 2 * PAD, H - PAD - y0);
+
+    ctx.strokeStyle = "#aaa";
+    ctx.fillStyle = "#aaa";
+    ctx.lineWidth = 1;
+    ctx.font = "12px sans-serif";
+
+    // axes
+    ctx.beginPath();
+    ctx.moveTo(PAD, PAD);
+    ctx.lineTo(PAD, H - PAD);
+    ctx.lineTo(W - PAD, H - PAD);
+    ctx.stroke();
+
+    // y = 0 line
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(PAD, y0);
+    ctx.lineTo(W - PAD, y0);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText("λ_min = 0", PAD + 5, y0 - 6);
+
+    // critical p = 1/3
+    const pCrit = 1 / 3;
+    const xCrit = PAD + pCrit * (W - 2 * PAD);
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(xCrit, PAD);
+    ctx.lineTo(xCrit, H - PAD);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText("p = 1/3", xCrit - 18, PAD - 8);
+
+    ctx.fillText("p", W / 2, H - 10);
+    ctx.save();
+    ctx.translate(12, H / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("value", 0, 0);
+    ctx.restore();
+  }
+
+  function drawCurves(pList, pptVals, negVals) {
+    drawAxes();
+
+    // 保存数据供 marker 使用
+    globalP = pList;
+    globalPPT = pptVals;
+    globalNEG = negVals;
+
+    // ===== PPT 曲线 =====
+    ctx.strokeStyle = "#4fc3f7";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    pList.forEach((p, i) => {
+      const x = PAD + p * (W - 2 * PAD);
+      const y = H / 2 - pptVals[i] * SCALE_Y;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // ===== Negativity 曲线 =====
+  if (negVals && negVals.length === pList.length) {
+    ctx.strokeStyle = "#ffb74d";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    pList.forEach((p, i) => {
+      const x = PAD + p * (W - 2 * PAD);
+      const y = H / 2 - negVals[i] * SCALE_Y;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+  }
+
+  // ===== 当前 p 的标记（不破坏结构）=====
+  function drawMarker(p) {
+    if (!globalP.length) return;
+
+    drawCurves(globalP, globalPPT, globalNEG);
+
+    const idx = Math.round(p * (globalP.length - 1));
+    const x = PAD + globalP[idx] * (W - 2 * PAD);
+    const y = H / 2 - globalPPT[idx] * SCALE_Y;
+
+    ctx.strokeStyle = "#e53935";
+    ctx.lineWidth = 1.5;
+
+    // vertical line
+    ctx.beginPath();
+    ctx.moveTo(x, PAD);
+    ctx.lineTo(x, H - PAD);
+    ctx.stroke();
+
+    // point
+    ctx.fillStyle = "#e53935";
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  function updateSingleP(p) {
+    fetch(`/analysis/api/werner?p=${p}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("ppt-info").innerText =
+          `λ_min = ${data.ppt_min_eigenvalue.toFixed(4)}, Negativity = ${data.negativity.toFixed(4)}`;
+
+        document.getElementById("ppt-explain").innerText =
+          data.explanation;
+      });
+  }
+
+  function loadScan() {
+    fetch(`/analysis/api/werner/scan`)
+      .then(res => res.json())
+      .then(data => {
+        console.log("scan keys:", Object.keys(data));
+        drawCurves(
+          data.p,
+          data.ppt_min_eigenvalues,
+          data.negativity   // ← 这里 99% 是 undefined
+        );
+        drawMarker(Number(slider.value));
+      });
+  }
+
+  slider.addEventListener("input", () => {
+    const p = Number(slider.value);
+    pVal.innerText = p.toFixed(2);
+    updateSingleP(p);
+    drawMarker(p);
+  });
+
+  // init
+  slider.value = 0.5;
+  pVal.innerText = "0.50";
+  loadScan();
+  updateSingleP(0.5);
+});
+</script>
+{% endblock %}

@@ -1,17 +1,33 @@
 {% extends "formulas/formulas_base.html" %}
+{% block title %}Schmidt Decomposition{% endblock %}
+
 {% block content %}
 
-<div class="card">
-    <div class="card-title">Schmidt 分解（两比特纯态）</div>
+<!-- ========= 公式展示区 ========= -->
+<div class="formula-panel">
+  <div class="formula-block">
+    $$|\psi\rangle
+      = a|00\rangle + b|01\rangle + c|10\rangle + d|11\rangle$$
 
-    <form method="post">
-        <label>a</label><input name="a" required>
-        <label>b</label><input name="b" required>
-        <label>c</label><input name="c" required>
-        <label>d</label><input name="d" required>
+    $$|\psi\rangle
+      = \sum_i \lambda_i\, |u_i\rangle_A \otimes |v_i\rangle_B$$
 
-        <button type="submit">计算 Schmidt 分解</button>
-    </form>
+    $$\text{Schmidt rank} = \#\{\lambda_i \neq 0\}$$
+  </div>
+</div>
+
+<!-- ========= 输入卡片 ========= -->
+<div class="card analysis-panel">
+  <h2>Schmidt Decomposition (Two-Qubit Pure State)</h2>
+
+  <form method="post" class="controls">
+    <label>a <input name="a" required></label>
+    <label>b <input name="b" required></label>
+    <label>c <input name="c" required></label>
+    <label>d <input name="d" required></label>
+
+    <button type="submit">▶ Compute</button>
+  </form>
 </div>
 
 {% if error %}
@@ -19,17 +35,24 @@
 {% endif %}
 
 {% if result %}
-<div class="card">
-    <div class="card-title">计算结果</div>
-    <div class="result">
-        <p>Schmidt 秩：{{ result.values.rank }}</p>
+<div class="card analysis-panel">
+  <h2>Result</h2>
 
-        {% if result.values.coeffs %}
-        <p>Schmidt 系数：{{ result.values.coeffs }}</p>
-        {% endif %}
+  <p>
+    Schmidt rank:
+    <b>{{ result.values.rank }}</b>
+  </p>
 
-        <p><b>{{ result.explanation }}</b></p>
-    </div>
+  {% if result.values.coeffs %}
+  <p>
+    Schmidt coefficients:
+    {{ result.values.coeffs }}
+  </p>
+  {% endif %}
+
+  <p class="analysis-conclusion">
+    {{ result.explanation }}
+  </p>
 </div>
 {% endif %}
 

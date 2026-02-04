@@ -1,0 +1,169 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}Concurrence{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    $$C(\rho) = \max(0, \lambda_1 - \lambda_2 - \lambda_3 - \lambda_4)$$
+    $$\tilde{\rho} = (\sigma_y \otimes \sigma_y)\rho^*(\sigma_y \otimes \sigma_y)$$
+  </div>
+</div>
+
+<div class="card analysis-panel">
+  <h2>Concurrence Analysis (Werner State)</h2>
+
+  <div class="controls">
+    <label>
+      p
+      <input type="range" min="0" max="1" step="0.01" id="p">
+      <span id="p_val"></span>
+    </label>
+  </div>
+
+  <canvas id="conc-canvas" width="600" height="400"></canvas>
+
+  <p id="conc-info"></p>
+  <p id="conc-explain"></p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const canvas = document.getElementById("conc-canvas");
+  const ctx = canvas.getContext("2d");
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const PAD = 50;
+  const SCALE_Y = 150;
+
+  const slider = document.getElementById("p");
+  const pVal = document.getElementById("p_val");
+
+  let globalP = [];
+  let globalC = [];
+
+  function drawAxes() {
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = "#aaa";
+    ctx.fillStyle = "#aaa";
+    ctx.lineWidth = 1;
+    ctx.font = "12px sans-serif";
+
+    // axes
+    ctx.beginPath();
+    ctx.moveTo(PAD, PAD);
+    ctx.lineTo(PAD, H - PAD);
+    ctx.lineTo(W - PAD, H - PAD);
+    ctx.stroke();
+
+    // y = 0
+    const y0 = H / 2;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(PAD, y0);
+    ctx.lineTo(W - PAD, y0);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText("C = 0", PAD + 5, y0 - 6);
+
+    // p = 1/3
+    const pCrit = 1 / 3;
+    const xCrit = PAD + pCrit * (W - 2 * PAD);
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(xCrit, PAD);
+    ctx.lineTo(xCrit, H - PAD);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText("p = 1/3", xCrit - 18, PAD - 8);
+
+    ctx.fillText("p", W / 2, H - 10);
+    ctx.save();
+    ctx.translate(12, H / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("Concurrence", 0, 0);
+    ctx.restore();
+  }
+
+  function drawCurve(pList, cList) {
+    drawAxes();
+
+    globalP = pList;
+    globalC = cList;
+
+    ctx.strokeStyle = "#81c784";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    pList.forEach((p, i) => {
+      const x = PAD + p * (W - 2 * PAD);
+      const y = H / 2 - cList[i] * SCALE_Y;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+
+    ctx.stroke();
+  }
+
+  function drawMarker(p) {
+    if (!globalP.length) return;
+
+    drawCurve(globalP, globalC);
+
+    const idx = Math.round(p * (globalP.length - 1));
+    const x = PAD + globalP[idx] * (W - 2 * PAD);
+    const y = H / 2 - globalC[idx] * SCALE_Y;
+
+    ctx.strokeStyle = "#e53935";
+    ctx.lineWidth = 1.5;
+
+    ctx.beginPath();
+    ctx.moveTo(x, PAD);
+    ctx.lineTo(x, H - PAD);
+    ctx.stroke();
+
+    ctx.fillStyle = "#e53935";
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  function updateSingleP(p) {
+    fetch(`/analysis/api/concurrence?p=${p}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("conc-info").innerText =
+          `Concurrence = ${data.concurrence.toFixed(4)}`;
+
+        document.getElementById("conc-explain").innerText =
+          data.explanation;
+      });
+  }
+
+  function loadScan() {
+    fetch(`/analysis/api/concurrence/scan`)
+      .then(res => res.json())
+      .then(data => {
+        drawCurve(data.p, data.concurrence);
+        drawMarker(Number(slider.value));
+      });
+  }
+
+  slider.addEventListener("input", () => {
+    const p = Number(slider.value);
+    pVal.innerText = p.toFixed(2);
+    updateSingleP(p);
+    drawMarker(p);
+  });
+
+  // init
+  slider.value = 0.5;
+  pVal.innerText = "0.50";
+  loadScan();
+  updateSingleP(0.5);
+});
+</script>
+{% endblock %}

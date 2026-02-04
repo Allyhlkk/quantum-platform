@@ -5,7 +5,12 @@ from core.results import AnalysisResult
 from core.formulas.structure.schmidt_rank import schmidt_rank
 from core.formulas.criteria.chsh import chsh_scan
 from utils.explain import explain_schmidt, explain_chsh
-
+from core.states.werner import werner_state
+from core.formulas.criteria.ppt import ppt_min_eigenvalue_werner
+from visualization.renderers.curve import scan_1d
+from utils.explain import explain_ppt
+from core.formulas.criteria.ppt import ppt_min_eigenvalue_werner
+from core.formulas.measures.negativity import negativity_werner
 
 # ==========================================================
 # 工具函数：hash key
@@ -83,3 +88,39 @@ def run_chsh_pipeline(state, a, a_p, b, step=0.02) -> AnalysisResult:
         _quantize(b, step),
         step
     )
+
+# ==========================================================
+# PPT
+# ==========================================================
+
+def run_werner_entanglement_pipeline(p: float) -> AnalysisResult:
+    ppt_min = ppt_min_eigenvalue_werner(p)
+    neg = negativity_werner(p)
+
+    return AnalysisResult(
+        values={
+            "p": p,
+            "ppt_min_eigenvalue": ppt_min,
+            "ppt_entangled": ppt_min < 0,
+            "negativity": neg
+        },
+        explanation=(
+            "PPT 判据显示该态为纠缠态。" if ppt_min < 0
+            else "PPT 判据未检测到纠缠。"
+        )
+    )
+def run_werner_scan(step: float = 0.01):
+    ps = np.arange(0.0, 1.0 + step, step)
+
+    ppt_vals = []
+    neg_vals = []
+
+    for p in ps:
+        ppt_vals.append(ppt_min_eigenvalue_werner(p))
+        neg_vals.append(negativity_werner(p))
+
+    return {
+        "p": ps.tolist(),
+        "ppt_min_eigenvalues": ppt_vals,
+        "negativities": neg_vals,
+    }

@@ -1,6 +1,8 @@
 # visualization/renderers/curve.py
 import matplotlib.pyplot as plt
+import numpy as np
 
+from typing import Callable, Tuple, List
 from visualization.base import export_figure
 from visualization.styles.default import STYLE as DEFAULT_STYLE
 from visualization.styles import chsh as chsh_style
@@ -71,3 +73,27 @@ def render_curve(
 
     plt.tight_layout()
     return export_figure(fig)
+
+def scan_1d(
+    param_range: Tuple[float, float],
+    step: float,
+    generator: Callable[[float], np.ndarray],
+    analyzer: Callable[[np.ndarray], float]
+):
+    """
+    Generic 1D scan utility.
+
+    Returns:
+        params: list[float]
+        values: list[float]
+    """
+    p_min, p_max = param_range
+    params = np.arange(p_min, p_max + step, step)
+
+    values: List[float] = []
+    for p in params:
+        state = generator(float(p))
+        val = analyzer(state)
+        values.append(float(val))
+
+    return params, values

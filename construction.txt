@@ -70,6 +70,7 @@ quantum-platform/
 │   │   │
 │   │   ├─ criteria/             # 判据类公式
 │   │   │   ├─ chsh.py
+│   │   │   ├─ negativity.py
 │   │   │   ├─ ppt.py
 │   │   │   └─ witness.py
 │   │   │
