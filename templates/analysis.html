@@ -2,52 +2,56 @@
 
 {% block content %}
 <div class="analysis-layout">
-    <!-- ========== 左侧：分析列表 ========== -->
     <aside class="analysis-sidebar card">
         <div class="card-title">分析列表</div>
         
         <div class="anal-group">
             <div class="anal-group-title">纠缠结构分析</div>
             <ul class="anal-list">
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/schmidt')">
-                    Schmidt 分解
-                </li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/schmidt')">Schmidt 分解</li>
             </ul>
         </div>
         
         <div class="anal-group">
             <div class="anal-group-title">非定域性判据</div>
             <ul class="anal-list">
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/chsh')">
-                    CHSH 不等式
-                </li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/chsh')">CHSH 不等式</li>
             </ul>
         </div>
         
         <div class="anal-group">
-            <div class="anal-group-title">混合态判据</div>
+            <div class="anal-group-title">混合态判据与度量</div>
             <ul class="anal-list">
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/ppt')">
-                    PPT 判据
-                </li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/concurrence')">
-                    Concurrence
-                </li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/witness')">
-                    Entanglement Witness
+                <li class="anal-item" onclick="loadAnalysis('/analysis/purity')">Purity (纯度)</li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/von_neumann')">Von Neumann 熵</li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/ppt')">PPT 判据</li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/concurrence')">Concurrence</li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/formation')">形成纠缠度 (EoF)</li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/fidelity')">State Fidelity (保真度)</li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/coherence')">Quantum Coherence (相干性)</li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/witness')">Entanglement Witness</li>
+                <li class="anal-item" onclick="loadAnalysis('/analysis/geometric')">Geometric Measure (几何纠缠)</li>
+            </ul>
+        </div>
+
+        <div class="anal-group">
+            <div class="anal-group-title">高级可视化 (Advanced)</div>
+            <ul class="anal-list">
+                <li class="anal-item" onclick="loadAnalysis('/analysis/advanced_3d')" style="font-weight: bold; color: #17BECF;">
+                    多维纠缠分析 (3D Surface)
                 </li>
             </ul>
         </div>
     </aside>
 
-    <!-- ========== 右侧：分析操作区 ========== -->
     <section class="analysis-workspace card">
         <div class="card-title">分析操作区</div>
         <iframe 
             id="analysis-frame" 
             src="/analysis/formula/schmidt" 
             frameborder="0" 
-            class="analysis-frame">
+            class="analysis-frame"
+            style="width: 100%;">
         </iframe>
     </section>
 </div>
@@ -55,23 +59,19 @@
 
 {% block extra_js %}
 <script>
-// 点击左侧列表切换 iframe
 function loadAnalysis(url) {
     const frame = document.getElementById("analysis-frame");
     frame.src = url;
 }
 
-// 自动调整 iframe 高度
 function resizeIframe() {
     const frame = document.getElementById("analysis-frame");
     if (!frame) return;
-    
     const topOffset = frame.getBoundingClientRect().top;
     const windowHeight = window.innerHeight;
-    frame.style.height = (windowHeight - topOffset - 20) + "px"; // 20px margin
+    frame.style.height = (windowHeight - topOffset - 20) + "px"; 
 }
 
-// 页面加载和窗口调整都要触发
 window.addEventListener("load", resizeIframe);
 window.addEventListener("resize", resizeIframe);
 </script>

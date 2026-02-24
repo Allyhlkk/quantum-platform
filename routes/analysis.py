@@ -1,8 +1,16 @@
 from flask import Blueprint, render_template, request, jsonify, abort
-from services.analysis_service import analyze_schmidt, analyze_chsh, analyze_werner_scan, analyze_concurrence, analyze_concurrence_scan, analyze_witness, analyze_witness_scan
-
+from services.analysis_service import (analyze_schmidt, analyze_chsh, analyze_werner_scan, 
+                                       analyze_concurrence, analyze_concurrence_scan, 
+                                       analyze_witness, analyze_witness_scan, 
+                                       analyze_advanced_3d_scan, analyze_purity_scan,
+                                       analyze_von_neumann_scan, analyze_formation_scan,
+                                       analyze_fidelity_scan, analyze_coherence_scan,
+                                       analyze_geometric_scan
+)
+from core.formulas.measures.concurrence import concurrence
+from core.states.generalized import generalized_werner
+from services.pipeline import universal_1d_scan
 from core.states.bell import psi_minus
-
 
 from services.analysis_service import (
     analyze_schmidt,
@@ -174,6 +182,19 @@ def concurrence_scan_api():
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+    
+@analysis_bp.route('/api/concurrence_dynamic_scan')
+def concurrence_dynamic_scan_data():
+    # 从前端获取滑块传来的 theta 值，默认为 pi/4
+    theta_val = request.args.get('theta', default=np.pi/4, type=float)
+    
+    # 构造一个偏函数：固定 theta，只让 p 变化
+    def target_state_func(p):
+        return generalized_werner(p, theta=theta_val)
+        
+    # 扫描 p 从 0 到 1
+    data = universal_1d_scan(target_state_func, concurrence, 0.0, 1.0, step=0.02)
+    return jsonify({"p": data["x"], "concurrence": data["y"], "theta": theta_val})
 
 @analysis_bp.route("/api/witness", methods=["GET"])
 def witness_api():
@@ -199,3 +220,73 @@ def witness_scan_api():
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+# 渲染独立的 Purity 页面
+@analysis_bp.route('/purity')
+def purity_page():
+    return render_template('formulas/purity.html')
+
+# 提供 Purity 1D 扫描数据
+@analysis_bp.route('/api/purity_scan')
+def purity_scan_data():
+    data = analyze_purity_scan(step=0.01)
+    return jsonify(data)
+
+# 渲染 3D 页面
+@analysis_bp.route('/advanced_3d')
+def advanced_3d_page():
+    return render_template('formulas/advanced_3d.html')
+
+# 提供 3D 渲染所需的数据接口
+@analysis_bp.route('/api/advanced_3d_data')
+def advanced_3d_data():
+    # resolution=20 表示生成一个 20x20 的网格
+    data = analyze_advanced_3d_scan(resolution=20)
+    return jsonify(data)
+
+# 渲染独立的 Von Neumann Entropy 页面
+@analysis_bp.route('/von_neumann')
+def von_neumann_page():
+    return render_template('formulas/von_neumann.html')
+
+# 提供 Von Neumann 1D 扫描数据
+@analysis_bp.route('/api/von_neumann_scan')
+def von_neumann_scan_data():
+    data = analyze_von_neumann_scan(step=0.01)
+    return jsonify(data)
+
+@analysis_bp.route('/formation')
+def formation_page():
+    return render_template('formulas/formation.html')
+
+@analysis_bp.route('/api/formation_scan')
+def formation_scan_data():
+    data = analyze_formation_scan(step=0.01)
+    return jsonify(data)
+
+@analysis_bp.route('/fidelity')
+def fidelity_page():
+    return render_template('formulas/fidelity.html')
+
+@analysis_bp.route('/api/fidelity_scan')
+def fidelity_scan_data():
+    data = analyze_fidelity_scan(step=0.01)
+    return jsonify(data)
+
+@analysis_bp.route('/coherence')
+def coherence_page():
+    return render_template('formulas/coherence.html')
+
+@analysis_bp.route('/api/coherence_scan')
+def coherence_scan_data():
+    data = analyze_coherence_scan(step=0.01)
+    return jsonify(data)
+
+@analysis_bp.route('/geometric')
+def geometric_page():
+    return render_template('formulas/geometric.html')
+
+@analysis_bp.route('/api/geometric_scan')
+def geometric_scan_data():
+    data = analyze_geometric_scan(step=0.01)
+    return jsonify(data)

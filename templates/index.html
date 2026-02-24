@@ -1,31 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="card">
-    <div class="card-title">平台定位</div>
-    <p class="result">
-        本平台以量子纠缠与非定域性为核心研究对象，
-        通过数值计算与可视化手段，将抽象的量子信息理论
-        转化为可交互、可理解的分析工具。
-    </p>
+<div class="hero-section">
+    <h1 class="glitch-text" data-text="QUANTUM ENTANGLEMENT">QUANTUM ENTANGLEMENT</h1>
+    <p class="subtitle">量子纠缠分析与可视化平台</p>
 </div>
 
-<div class="card">
-    <div class="card-title">当前功能模块</div>
-    <ul class="result">
-        <li>🔹 Schmidt 分解：纯态纠缠结构分析</li>
-        <li>🔹 CHSH 不等式：量子非定域性判定</li>
-        <li>🔹 混合态判据（规划）：PPT / Werner 态</li>
-    </ul>
-</div>
+<div class="glass-grid">
+    <div class="card glass-card ripple-effect">
+        <div class="card-title"><i class="fas fa-bullseye"></i> 平台定位</div>
+        <p class="result">
+            本平台以量子纠缠与非定域性为核心研究对象，
+            利用 <span class="highlight">数值计算</span> 与 <span class="highlight">多维可视化</span> 手段，
+            将抽象的量子信息理论转化为可交互、可视化的科研工具。
+        </p>
+        <div class="card-bg-icon">⚛</div>
+    </div>
 
-<!-- ⭐ 新增：实验入口 -->
-<div class="card">
-    <div class="card-title">实验入口</div>
-    <p class="result">
-        点击下方按钮进入实验大厅，选择并运行具体的量子纠缠分析实验。
-    </p>
-    <a href="/analysis" class="btn-primary">▶ 开始实验</a>
+    <div class="card glass-card ripple-effect">
+        <div class="card-title"><i class="fas fa-cubes"></i> 核心矩阵</div>
+        <ul class="result feature-list">
+            <li><span class="pulse-dot"></span> <strong>Schmidt 分解：</strong> 纯态纠缠结构深度剖析</li>
+            <li><span class="pulse-dot"></span> <strong>CHSH 不等式：</strong> 贝尔非定域性实时违背分析</li>
+            <li><span class="pulse-dot"></span> <strong>混合态分析：</strong> 基于 PPT 判据与 Werner 态的纠缠量化</li>
+        </ul>
+    </div>
+
+    <div class="card glass-card experiment-card">
+        <div class="card-title"><i class="fas fa-flask"></i> 实验空间</div>
+        <p class="result">
+            准备好探索量子世界的奇妙相关性了吗？
+        </p>
+        <div class="btn-container">
+            <a href="/analysis" class="neon-btn">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                进入实验中心
+            </a>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

@@ -1,0 +1,30 @@
+{% extends "formulas/formulas_base.html" %}
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>State Fidelity (态保真度)</h3>
+    $$F(\rho, \sigma) = \left( \text{Tr} \sqrt{\sqrt{\rho} \sigma \sqrt{\rho}} \right)^2$$
+  </div>
+  <div class="formula-bound">
+    <span>衡量实际制备态与目标态（此处为最大纠缠态）的重合度。取值 [0, 1]，1 代表完全重合。</span>
+  </div>
+</div>
+
+<div class="card analysis-panel">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Werner态保真度扫描 (1D Scan)</h2>
+      <button id="load-btn" onclick="loadFidelityData()" class="btn-primary">▶ 生成曲线</button>
+  </div>
+  <div id="plot-fidelity-1d" style="width: 100%; height: 400px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+<script>
+function loadFidelityData() {
+    fetch("/analysis/api/fidelity_scan").then(res => res.json()).then(data => {
+        const trace = { x: data.p, y: data.fidelity, type: 'scatter', line: {color: '#2CA02C'} };
+        Plotly.newPlot('plot-fidelity-1d', [trace], { title: 'Fidelity vs p', xaxis: {title: 'p'}, yaxis: {title: 'Fidelity'} });
+    });
+}
+</script>
+{% endblock %}

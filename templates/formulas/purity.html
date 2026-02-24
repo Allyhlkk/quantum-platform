@@ -1,0 +1,68 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}Purity Analysis{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>Purity (纯度)</h3>
+    $$\text{Purity}(\rho) = \text{Tr}(\rho^2)$$
+  </div>
+  <div class="formula-bound">
+    <span>纯度的取值范围是 [1/d, 1]。对于两比特系统(d=4)，纯度为 1 表示纯态，纯度为 0.25 表示最大混合态。</span>
+  </div>
+</div>
+
+<div class="card analysis-panel">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Werner态纯度扫描 (1D Scan)</h2>
+      <button id="load-btn" onclick="loadPurityData()" style="padding: 8px 16px; cursor: pointer;">
+          ▶ 生成纯度曲线
+      </button>
+  </div>
+  
+  <p id="loading-text" style="display:none; color: #666; margin-top: 10px;">
+      计算中，请稍候...
+  </p>
+
+  <div id="plot-purity-1d" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+<script>
+function loadPurityData() {
+    document.getElementById("loading-text").style.display = "block";
+    document.getElementById("load-btn").disabled = true;
+
+    fetch("/analysis/api/purity_scan")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("loading-text").style.display = "none";
+            document.getElementById("load-btn").disabled = false;
+
+            const trace = {
+                x: data.p,
+                y: data.purity,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {color: '#17BECF', width: 3},
+                marker: {size: 6}
+            };
+
+            const layout = {
+                title: 'Purity vs Noise Parameter (p)',
+                xaxis: {title: 'p (纯态权重)'},
+                yaxis: {title: 'Purity', range: [0, 1.05]},
+                margin: {l: 50, r: 50, b: 50, t: 50}
+            };
+
+            Plotly.newPlot('plot-purity-1d', [trace], layout);
+        })
+        .catch(err => {
+            console.error(err);
+            alert("数据加载失败，请检查后端路由。");
+            document.getElementById("load-btn").disabled = false;
+        });
+}
+</script>
+{% endblock %}

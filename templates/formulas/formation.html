@@ -1,0 +1,68 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}Entanglement of Formation{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>Entanglement of Formation (形成纠缠度)</h3>
+    $$E_F(\rho) = h\left(\frac{1 + \sqrt{1 - C(\rho)^2}}{2}\right)$$
+  </div>
+  <div class="formula-bound">
+    <span>其中 $h(x)$ 为二元香农熵。形成纠缠度代表制备该量子态所需的平均最大纠缠态（Bell态）的数量。取值范围 [0, 1]。</span>
+  </div>
+</div>
+
+<div class="card analysis-panel">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Werner态形成纠缠度扫描 (1D Scan)</h2>
+      <button id="load-btn" onclick="loadFormationData()" style="padding: 8px 16px; cursor: pointer;">
+          ▶ 生成 EoF 曲线
+      </button>
+  </div>
+  
+  <p id="loading-text" style="display:none; color: #666; margin-top: 10px;">
+      计算中，请稍候...
+  </p>
+
+  <div id="plot-formation-1d" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+<script>
+function loadFormationData() {
+    document.getElementById("loading-text").style.display = "block";
+    document.getElementById("load-btn").disabled = true;
+
+    fetch("/analysis/api/formation_scan")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("loading-text").style.display = "none";
+            document.getElementById("load-btn").disabled = false;
+
+            const trace = {
+                x: data.p,
+                y: data.formation,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {color: '#8C564B', width: 3},
+                marker: {size: 6}
+            };
+
+            const layout = {
+                title: 'Entanglement of Formation vs Noise (p)',
+                xaxis: {title: 'p (纯态权重)'},
+                yaxis: {title: 'E_F(ρ)', range: [-0.05, 1.05]},
+                margin: {l: 50, r: 50, b: 50, t: 50}
+            };
+
+            Plotly.newPlot('plot-formation-1d', [trace], layout);
+        })
+        .catch(err => {
+            console.error(err);
+            alert("数据加载失败。");
+            document.getElementById("load-btn").disabled = false;
+        });
+}
+</script>
+{% endblock %}

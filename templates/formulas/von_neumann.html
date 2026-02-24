@@ -1,0 +1,68 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}Von Neumann Entropy Analysis{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>Von Neumann Entropy (冯·诺依曼熵)</h3>
+    $$S(\rho) = -\text{Tr}(\rho \log_2 \rho)$$
+  </div>
+  <div class="formula-bound">
+    <span>量化量子态的混乱程度。取值范围 [0, 2]（针对两比特系统）。值越低越纯净，0 代表完美纯态。</span>
+  </div>
+</div>
+
+<div class="card analysis-panel">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Werner态熵值扫描 (1D Scan)</h2>
+      <button id="load-btn" onclick="loadEntropyData()" style="padding: 8px 16px; cursor: pointer;">
+          ▶ 生成熵值曲线
+      </button>
+  </div>
+  
+  <p id="loading-text" style="display:none; color: #666; margin-top: 10px;">
+      计算中，请稍候...
+  </p>
+
+  <div id="plot-entropy-1d" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+<script>
+function loadEntropyData() {
+    document.getElementById("loading-text").style.display = "block";
+    document.getElementById("load-btn").disabled = true;
+
+    fetch("/analysis/api/von_neumann_scan")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("loading-text").style.display = "none";
+            document.getElementById("load-btn").disabled = false;
+
+            const trace = {
+                x: data.p,
+                y: data.von_neumann,
+                type: 'scatter',
+                mode: 'lines+markers',
+                line: {color: '#FF7F0E', width: 3},
+                marker: {size: 6}
+            };
+
+            const layout = {
+                title: 'Von Neumann Entropy vs Noise Parameter (p)',
+                xaxis: {title: 'p (纯态权重)'},
+                yaxis: {title: 'Entropy S(ρ)', range: [0, 2.1]},
+                margin: {l: 50, r: 50, b: 50, t: 50}
+            };
+
+            Plotly.newPlot('plot-entropy-1d', [trace], layout);
+        })
+        .catch(err => {
+            console.error(err);
+            alert("数据加载失败，请检查后端路由。");
+            document.getElementById("load-btn").disabled = false;
+        });
+}
+</script>
+{% endblock %}

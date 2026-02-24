@@ -1,0 +1,116 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}Advanced 3D Surface Analysis{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>Generalized Werner State 广义Werner态 3D 联合分析</h3>
+    $$|\psi(\theta)\rangle = \cos\theta|00\rangle + \sin\theta|11\rangle$$
+    $$\rho(p, \theta) = p |\psi(\theta)\rangle\langle\psi(\theta)| + \frac{1-p}{4} I$$
+  </div>
+  <div class="formula-bound">
+    <span>横轴 p: 纯态的抗噪权重 (0 到 1) <br> 纵轴 θ: 初始纯态的纠缠角度 (0 到 π/2，其中 π/4 为最大纠缠)</span>
+  </div>
+</div>
+
+<div class="card analysis-panel">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>多维度纠缠指标控制台</h2>
+      
+      <div style="display: flex; gap: 10px; align-items: center;">
+          <label for="metric-select" style="font-weight: bold;">选择物理量：</label>
+          <select id="metric-select" style="padding: 5px; border-radius: 4px;">
+              <option value="concurrence">Concurrence (共生纠缠度)</option>
+              <option value="purity">Purity (系统纯度)</option>
+              <option value="von_neumann">Von Neumann Entropy (冯·诺依曼熵)</option>
+              <option value="ppt">PPT Min Eigenvalue (PPT最小特征值)</option>
+              <option value="negativity">Negativity (负纠缠度)</option>
+              <option value="fidelity">Fidelity (态保真度)</option>
+              <option value="geometric">Geometric Measure</option>
+          </select>
+          <button id="load-btn" onclick="loadAndRender3D()" style="padding: 8px 16px; cursor: pointer;">
+              ▶ 生成/刷新 3D 模型
+          </button>
+      </div>
+  </div>
+  
+  <p id="loading-text" style="display:none; color: #666; margin-top: 10px;">
+      正在进行二维张量网络扫描，计算量较大，请稍候...
+  </p>
+
+  <div id="plot-3d-main" style="width: 100%; height: 600px; margin-top: 20px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+<script>
+let global3DData = null;
+
+const metricConfig = {
+    "concurrence": { title: "Concurrence (共生纠缠度)", colorscale: "Viridis" },
+    "purity": { title: "Purity (纯度)", colorscale: "Plasma" },
+    "von_neumann": { title: "Von Neumann Entropy (冯·诺依曼熵)", colorscale: "Cividis" },
+    "ppt": { title: "PPT Min Eigenvalue (小于0表示纠缠)", colorscale: "RdBu" },
+    "negativity": { title: "Negativity (负纠缠度)", colorscale: "Inferno" },
+    "fidelity": { title: "State Fidelity (与目标态重合度)", colorscale: "Greens" },
+    "geometric": { title: "Geometric Measure (几何距离度量)", colorscale: "Tropic" }
+};
+
+function renderPlot(metricKey) {
+    if (!global3DData) return;
+    
+    const dataObj = global3DData[metricKey];
+    const config = metricConfig[metricKey];
+    
+    const trace = {
+        z: dataObj.z,
+        x: dataObj.x, 
+        y: dataObj.y, 
+        type: 'surface',
+        colorscale: config.colorscale,
+        colorbar: {title: metricKey}
+    };
+    
+    const layout = {
+        title: config.title,
+        scene: {
+            xaxis: {title: 'p (纯态权重)'},
+            yaxis: {title: 'θ (初始纠缠角度)'},
+            zaxis: {title: metricKey}
+        },
+        margin: {l: 0, r: 0, b: 0, t: 40}
+    };
+    
+    Plotly.newPlot('plot-3d-main', [trace], layout);
+}
+
+function loadAndRender3D() {
+    document.getElementById("loading-text").style.display = "block";
+    document.getElementById("load-btn").disabled = true;
+
+    fetch("/analysis/api/advanced_3d_data")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("loading-text").style.display = "none";
+            document.getElementById("load-btn").disabled = false;
+            
+            global3DData = data; 
+            
+            const selectedMetric = document.getElementById("metric-select").value;
+            renderPlot(selectedMetric);
+        })
+        .catch(err => {
+            console.error(err);
+            alert("数据加载失败，请检查后端运行状态。");
+            document.getElementById("load-btn").disabled = false;
+            document.getElementById("loading-text").style.display = "none";
+        });
+}
+
+document.getElementById("metric-select").addEventListener("change", function() {
+    if (global3DData) {
+        renderPlot(this.value);
+    }
+});
+</script>
+{% endblock %}
