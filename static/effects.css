@@ -1,8 +1,127 @@
+/* ==============================
+   基础交互：刻晴的轻盈感
+   ============================== */
 .card {
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transition: 
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+        box-shadow 0.3s ease,
+        border-color 0.3s ease;
+    position: relative;
+    overflow: hidden; /* 必须隐藏溢出，否则流光会跑出来 */
 }
 
 .card:hover {
-    transform: scale(1.03);
-    box-shadow: 0 20px 40px rgba(123,108,246,0.25);
+    /* 模拟刻晴瞬身后的位移感：轻微上浮并放大 */
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(123, 108, 246, 0.2);
+    border-color: var(--kq-pink);
+}
+
+/* ==============================
+   战术流光：模拟鸣潮边框扫描
+   ============================== */
+/* --- 将扫光效果限制在首页 --- */
+
+/* 只有首页的卡片才具备扫光层 */
+[data-module="home"] .card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg, 
+        transparent, 
+        rgba(255, 120, 180, 0.2), 
+        transparent
+    );
+    transition: none;
+    pointer-events: none; /* 确保不影响鼠标点击 */
+}
+
+/* 只有首页的卡片悬停时才触发扫光 */
+[data-module="home"] .card:hover::after {
+    left: 100%;
+    transition: 0.6s ease-in-out;
+}
+
+/* ==============================
+   雷痕装饰：卡片四个角的小细节
+   ============================== */
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    /* 刻晴发饰的暗金色点缀 */
+    border-top: 2px solid var(--kq-gold);
+    border-left: 2px solid var(--kq-gold);
+    opacity: 0;
+    transition: 0.3s;
+}
+
+.card:hover::before {
+    opacity: 1;
+    top: 5px;
+    left: 5px;
+}
+
+/* ==============================
+   动态背景：网格与颗粒感
+   ============================== */
+#bg-canvas::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    /* 鸣潮风格的细密扫描线 */
+    background: linear-gradient(
+        rgba(18, 16, 45, 0) 50%, 
+        rgba(0, 0, 0, 0.1) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.3;
+}
+
+/* ==============================
+   按钮特效：雷厉风行
+   ============================== */
+.kuro-btn, button {
+    position: relative;
+    z-index: 1;
+}
+
+.kuro-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: var(--kq-purple);
+    z-index: -1;
+    transition: width 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.kuro-btn:hover::before {
+    width: 100%;
+}
+
+/* ==============================
+   数字/标题故障效果 (Glitch)
+   ============================== */
+.brand-glitch .title:hover {
+    animation: kq-glitch 0.2s steps(2) infinite;
+}
+
+@keyframes kq-glitch {
+    0% { transform: translate(2px, 0); text-shadow: -2px 0 var(--kq-pink); }
+    50% { transform: translate(-2, 1px); text-shadow: 2px 0 var(--kq-purple); }
+    100% { transform: translate(0); }
 }

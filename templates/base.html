@@ -5,18 +5,92 @@
     <title>量子纠缠分析与可视化平台</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/effects.css">
+    <style>
+        /* --- 基础 Header 样式 (默认占位) --- */
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 0;
+            background: #0f0c23; /* 普通页面给一个深色实色背景 */
+            border-bottom: 1px solid rgba(123, 108, 246, 0.2);
+            position: relative; /* 关键：普通页面它会占据空间，不遮挡文字 */
+            z-index: 1000;
+        }
+
+        /* --- 首页专用：透明悬浮模式 --- */
+        /* 当 body 的 data-module 为 home 时，切换为悬浮 */
+        [data-module="home"] .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to bottom, rgba(15, 12, 35, 0.9), transparent);
+            border-bottom: none;
+        }
+
+        .header-brand {
+            text-align: center;
+            position: relative;
+            padding: 0 40px;
+            transition: transform 0.3s ease;
+        }
+        .header-brand:hover { transform: scale(1.02); }
+
+        /* 刻晴风格装饰线 */
+        .header-brand::before, .header-brand::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 100px;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--kq-purple), var(--kq-pink));
+        }
+        .header-brand::before { right: 100%; }
+        .header-brand::after { left: 100%; transform: scaleX(-1); }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--kq-white);
+            text-shadow: 0 0 20px var(--kq-purple-glow);
+            margin: 0;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: var(--kq-pink);
+            letter-spacing: 6px;
+            margin-top: 8px;
+            opacity: 0.9;
+        }
+
+        /* 调整内容容器 */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* 首页不需要 container 的内边距 */
+        [data-module="home"] .container {
+            max-width: none;
+            padding: 0;
+        }
+    </style>
 </head>
-<body data-module="{{ module_name | default('home') }}">
+<body data-module="{{ module_name | default('default') }}">
     
 <canvas id="bg-canvas"></canvas>
 
 <header class="header">
-    <!-- 点击返回主页 -->
-    <a href="{{ url_for('main.index') }}" style="text-decoration:none; color:inherit;">
-        <div class="header-title">Quantum Entanglement Platform</div>
-        <div class="header-subtitle">
-            量子纠缠分析与可视化平台
-        </div>
+    <a href="{{ url_for('main.index') }}" class="header-brand" style="text-decoration:none;">
+        <div class="header-title">Quantum Entanglement</div>
+        <div class="header-subtitle">量子纠缠分析与可视化综合平台</div>
     </a>
 </header>
 
@@ -29,7 +103,6 @@
 </footer>
 
 <script src="{{ url_for('static', filename='particles.js') }}"></script>
-
 {% block extra_js %}{% endblock %}
 
 <script>

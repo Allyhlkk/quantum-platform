@@ -1,78 +1,397 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="analysis-layout">
+<style>
+    /* =========================================
+       1. 全局布局修正与视图切换器 (保持不变)
+       ========================================= */
+    .container {
+        max-width: none !important;
+        padding: 0 20px !important;
+        margin: 0 !important;
+    }
+
+    .view-controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        padding: 0;
+    }
+
+    .view-btn {
+        background: rgba(123, 108, 246, 0.1);
+        color: var(--kq-gray);
+        border: 1px solid var(--kq-border);
+        padding: 6px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: 0.3s;
+        letter-spacing: 1px;
+    }
+
+    .view-btn:hover {
+        background: rgba(123, 108, 246, 0.3);
+        color: var(--kq-white);
+    }
+
+    .view-btn.active {
+        background: var(--kq-purple);
+        color: white;
+        border-color: var(--kq-purple);
+        box-shadow: 0 0 15px var(--kq-purple-glow);
+        font-weight: bold;
+    }
+
+    /* =========================================
+       2. 经典视图 (保持结构与样式 100% 不动)
+       ========================================= */
+    .analysis-layout {
+        display: none; 
+        gap: 15px;
+        height: calc(100vh - 160px); 
+        margin-top: 10px;
+        overflow: hidden; 
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .analysis-sidebar {
+        width: 260px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: var(--kq-glass);
+    }
+    .anal-list-wrapper {
+        flex-grow: 1;
+        overflow-y: auto; 
+        padding-right: 5px;
+    }
+
+    .analysis-workspace {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        height: 100%;    
+        overflow: hidden; 
+        position: relative;
+    }
+
+    .analysis-frame {
+        width: 100%;
+        height: 100%;    
+        flex-grow: 1;
+        border: none;
+        background: transparent;
+        overflow: auto; 
+    }
+
+    /* =========================================
+       3. 3D 轮盘视图 (修正交互体验)
+       ========================================= */
+    .carousel-layout {
+        display: flex;
+        height: calc(100vh - 160px); 
+        margin-top: 10px;
+        background: radial-gradient(circle at center, rgba(123, 108, 246, 0.08) 0%, transparent 70%);
+        border: 1px dashed var(--kq-border);
+        border-radius: 8px;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 0.3s ease;
+        overflow: hidden;
+        position: relative;
+        perspective: 1500px;
+        cursor: grab;
+        /* 防止拖拽时选中文字 */
+        user-select: none; 
+        -webkit-user-select: none;
+    }
+    .carousel-layout:active { cursor: grabbing; }
+
+    .q-track {
+        position: absolute;
+        width: 100%;
+        height: 500px;
+        transform-style: preserve-3d;
+        will-change: transform;
+        pointer-events: none; /* 轨道不拦截点击 */
+    }
+
+    .q-card {
+        position: absolute;
+        width: 380px;
+        height: 500px;
+        left: 50%;
+        top: 50%;
+        margin-left: -190px; /* 修正：应该是宽度的一半 */
+        margin-top: -250px;  /* 修正：应该是高度的一半 */
+        background: rgba(20, 18, 45, 0.95);
+        border: 1px solid var(--kq-purple);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+        text-align: center;
+        padding: 30px;
+        box-sizing: border-box;
+        backface-visibility: hidden;
+        transition: border-color 0.4s, box-shadow 0.4s;
+        pointer-events: auto; /* 卡片恢复点击 */
+    }
+
+    .q-card.is-active {
+        border-color: var(--kq-pink);
+        box-shadow: 0 0 30px rgba(255, 120, 180, 0.2), inset 0 0 15px rgba(255, 120, 180, 0.1);
+    }
+
+    .q-icon {
+        font-size: 45px;
+        margin-bottom: 20px;
+        pointer-events: none; /* 防止图标干扰点击 */
+    }
+
+    .q-title {
+        font-size: 22px;
+        font-weight: bold;
+        color: var(--kq-white);
+        margin-bottom: 12px;
+        pointer-events: none;
+    }
+    
+    .q-desc {
+        font-size: 14px;
+        color: var(--kq-gray);
+        line-height: 1.5;
+        pointer-events: none;
+    }
+</style>
+
+<div class="view-controls">
+    <button id="btn-classic" class="view-btn" onclick="switchView('classic')">经典分析模式</button>
+    <button id="btn-carousel" class="view-btn active" onclick="switchView('carousel')">3D 轮盘模式</button>
+</div>
+
+<div id="view-classic" class="analysis-layout">
     <aside class="analysis-sidebar card">
         <div class="card-title">分析列表</div>
-        
-        <div class="anal-group">
-            <div class="anal-group-title">纠缠结构分析</div>
-            <ul class="anal-list">
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/schmidt')">Schmidt 分解</li>
-            </ul>
-        </div>
-        
-        <div class="anal-group">
-            <div class="anal-group-title">非定域性判据</div>
-            <ul class="anal-list">
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/chsh')">CHSH 不等式</li>
-            </ul>
-        </div>
-        
-        <div class="anal-group">
-            <div class="anal-group-title">混合态判据与度量</div>
-            <ul class="anal-list">
-                <li class="anal-item" onclick="loadAnalysis('/analysis/purity')">Purity (纯度)</li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/von_neumann')">Von Neumann 熵</li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/ppt')">PPT 判据</li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/concurrence')">Concurrence</li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formation')">形成纠缠度 (EoF)</li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/fidelity')">State Fidelity (保真度)</li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/coherence')">Quantum Coherence (相干性)</li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/formula/witness')">Entanglement Witness</li>
-                <li class="anal-item" onclick="loadAnalysis('/analysis/geometric')">Geometric Measure (几何纠缠)</li>
-            </ul>
-        </div>
-
-        <div class="anal-group">
-            <div class="anal-group-title">高级可视化 (Advanced)</div>
-            <ul class="anal-list">
-                <li class="anal-item" onclick="loadAnalysis('/analysis/advanced_3d')" style="font-weight: bold; color: #17BECF;">
-                    多维纠缠分析 (3D Surface)
-                </li>
-            </ul>
+        <div class="anal-list-wrapper">
+            <div class="anal-group">
+                <div class="anal-group-title">纠缠结构分析</div>
+                <ul class="anal-list">
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/schmidt')">Schmidt 分解</li>
+                </ul>
+            </div>
+            <div class="anal-group">
+                <div class="anal-group-title">非定域性判据</div>
+                <ul class="anal-list">
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/chsh')">CHSH 不等式</li>
+                </ul>
+            </div>
+            <div class="anal-group">
+                <div class="anal-group-title">混合态判据与度量</div>
+                <ul class="anal-list">
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/purity')">Purity (纯度)</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/von_neumann')">Von Neumann 熵</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/ppt')">PPT 判据</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/concurrence')">Concurrence</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formation')">形成纠缠度 (EoF)</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/fidelity')">State Fidelity (保真度)</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/coherence')">Quantum Coherence (相干性)</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/witness')">Entanglement Witness</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/geometric')">Geometric Measure (几何纠缠)</li>
+                </ul>
+            </div>
         </div>
     </aside>
-
     <section class="analysis-workspace card">
         <div class="card-title">分析操作区</div>
-        <iframe 
-            id="analysis-frame" 
-            src="/analysis/formula/schmidt" 
-            frameborder="0" 
-            class="analysis-frame"
-            style="width: 100%;">
-        </iframe>
+        <iframe id="analysis-frame" src="/analysis/formula/schmidt" frameborder="0" class="analysis-frame"></iframe>
     </section>
+</div>
+
+<div id="view-carousel" class="carousel-layout">
+    <div class="q-track" id="q-track">
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/schmidt')">
+            <span class="q-icon">⚡</span>
+            <div class="q-title">Schmidt 分解</div>
+            <div class="q-desc">纠缠结构分析核心基石</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/chsh')">
+            <span class="q-icon">⚖️</span>
+            <div class="q-title">CHSH 不等式</div>
+            <div class="q-desc">非定域性判据测量</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/purity')">
+            <span class="q-icon">✨</span>
+            <div class="q-title">Purity (纯度)</div>
+            <div class="q-desc">量子态混合度基础检测</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/von_neumann')">
+            <span class="q-icon">🌀</span>
+            <div class="q-title">Von Neumann 熵</div>
+            <div class="q-desc">混合态信息熵计算</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/ppt')">
+            <span class="q-icon">🔍</span>
+            <div class="q-title">PPT 判据</div>
+            <div class="q-desc">部分转置正定性检测</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/concurrence')">
+            <span class="q-icon">🔗</span>
+            <div class="q-title">Concurrence</div>
+            <div class="q-desc">双量子位纠缠度量</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formation')">
+            <span class="q-icon">🧬</span>
+            <div class="q-title">形成纠缠度 (EoF)</div>
+            <div class="q-desc">构建量子态所需纠缠资源</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/fidelity')">
+            <span class="q-icon">🎯</span>
+            <div class="q-title">State Fidelity</div>
+            <div class="q-desc">量子态保真度分析</div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+const track = document.getElementById('q-track');
+const cards = Array.from(document.querySelectorAll('.q-card'));
+const carouselArea = document.getElementById('view-carousel');
+
+let physics = {
+    offset: 0,
+    velocity: 0,
+    isDragging: false,
+    startX: 0,
+    gap: 400, 
+    isActive: true,
+    totalWidth: 0,
+    hasMoved: false // 新增：用于区分“点击”和“拖拽”
+};
+
+physics.totalWidth = cards.length * physics.gap;
+
+function update3D() {
+    if (!physics.isActive) return;
+
+    if (!physics.isDragging) {
+        physics.offset += physics.velocity;
+        physics.velocity *= 0.95; 
+
+        if (Math.abs(physics.velocity) < 0.5) {
+            const target = Math.round(physics.offset / physics.gap) * physics.gap;
+            physics.offset += (target - physics.offset) * 0.03;
+        }
+    }
+
+    cards.forEach((card, i) => {
+        let x = (i * physics.gap) - physics.offset;
+        const half = physics.totalWidth / 2;
+        x = ((x + half) % physics.totalWidth + physics.totalWidth) % physics.totalWidth - half;
+
+        const ratio = x / 700;
+        const absRatio = Math.abs(ratio);
+
+        const scale = 1 - (absRatio * 0.05);
+        const translateZ = -absRatio * 350;
+        const rotateY = ratio * -45;
+        const opacity = 1 - Math.pow(absRatio, 2);
+
+        card.style.transform = `translateX(${x * 0.8}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+        card.style.opacity = Math.max(opacity, 0.15);
+        card.style.zIndex = Math.round((1 - absRatio) * 100);
+
+        if (Math.abs(x) < physics.gap / 2) card.classList.add('is-active');
+        else card.classList.remove('is-active');
+    });
+
+    requestAnimationFrame(update3D);
+}
+
+// 交互优化
+const onStart = e => {
+    physics.isDragging = true;
+    physics.hasMoved = false; // 重置移动状态
+    physics.startX = e.clientX || e.touches[0].clientX;
+    physics.velocity = 0;
+};
+
+const onMove = e => {
+    if (!physics.isDragging) return;
+    const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+    const dx = x - physics.startX;
+    if (Math.abs(dx) > 5) physics.hasMoved = true; // 只要位移超过5px就判定为拖拽
+    physics.offset -= dx;
+    physics.velocity = -dx;
+    physics.startX = x;
+};
+
+const onEnd = () => {
+    physics.isDragging = false;
+};
+
+carouselArea.addEventListener('mousedown', onStart);
+window.addEventListener('mousemove', onMove);
+window.addEventListener('mouseup', onEnd);
+carouselArea.addEventListener('touchstart', onStart, {passive: true});
+window.addEventListener('touchmove', onMove, {passive: true});
+window.addEventListener('touchend', onEnd);
+
+// 新的点击处理函数
+function handleCardClick(url) {
+    // 只有当用户没有进行显著拖拽时，才触发跳转
+    if (!physics.hasMoved) {
+        loadAnalysis(url);
+        switchView('classic');
+    }
+}
+
+function switchView(viewName) {
+    const classicView = document.getElementById('view-classic');
+    const carouselView = document.getElementById('view-carousel');
+    const btnClassic = document.getElementById('btn-classic');
+    const btnCarousel = document.getElementById('btn-carousel');
+
+    if (viewName === 'classic') {
+        physics.isActive = false;
+        carouselView.style.opacity = '0';
+        setTimeout(() => {
+            carouselView.style.display = 'none';
+            classicView.style.display = 'flex';
+            setTimeout(() => classicView.style.opacity = '1', 50);
+        }, 300);
+        btnClassic.classList.add('active');
+        btnCarousel.classList.remove('active');
+    } else {
+        physics.isActive = true;
+        update3D();
+        classicView.style.opacity = '0';
+        setTimeout(() => {
+            classicView.style.display = 'none';
+            carouselView.style.display = 'flex';
+            setTimeout(() => carouselView.style.opacity = '1', 50);
+        }, 300);
+        btnCarousel.classList.add('active');
+        btnClassic.classList.remove('active');
+    }
+}
+
 function loadAnalysis(url) {
     const frame = document.getElementById("analysis-frame");
     frame.src = url;
 }
 
-function resizeIframe() {
-    const frame = document.getElementById("analysis-frame");
-    if (!frame) return;
-    const topOffset = frame.getBoundingClientRect().top;
-    const windowHeight = window.innerHeight;
-    frame.style.height = (windowHeight - topOffset - 20) + "px"; 
-}
-
-window.addEventListener("load", resizeIframe);
-window.addEventListener("resize", resizeIframe);
+update3D();
 </script>
 {% endblock %}

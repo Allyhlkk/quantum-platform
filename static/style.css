@@ -1,55 +1,104 @@
 /* ==============================
+   核心配色定义 (基于刻晴配色：雷系紫、霓裳粉、云来金)
+   ============================== */
+:root {
+    --kq-bg: #0b0a1a;             /* 极深紫底色 */
+    --kq-purple: #7B6CF6;         /* 刻晴雷系主色 */
+    --kq-purple-glow: rgba(123, 108, 246, 0.4);
+    --kq-pink: #ff78b4;           /* 霓裳花粉/元素爆发高亮 */
+    --kq-gold: #f3e5ab;           /* 剑鞘金色装饰 */
+    --kq-white: #e8e6ff;          /* 亮紫色调文字 */
+    --kq-glass: rgba(20, 18, 45, 0.7); /* 战术半透明质感 */
+    --kq-border: rgba(123, 108, 246, 0.25);
+    --kq-gray: #8892b0;
+}
+
+/* ==============================
    全局样式
    ============================== */
-body {
+html, body {
+    height: 100%;
     margin: 0;
-    font-family: "Segoe UI", "PingFang SC", Arial, sans-serif;
-    background: linear-gradient(135deg, #F4F5FB, #ECEEFF);
-    color: #2C2F4A;
+    background-color: var(--kq-bg);
+    color: var(--kq-white);
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    /* 默认：允许正常滚动（解决实验页无法滚动的问题） */
+    overflow-x: hidden;
+    overflow-y: auto; 
+}
+
+/* 关键：只有首页才锁定滚动条 */
+body[data-module="home"], 
+body[data-module="home"] html {
+    overflow: hidden !important; 
+}
+
+body {
+    /* 模拟刻晴大招瞬间的雷影感 */
+    background-image: 
+        radial-gradient(circle at 20% 30%, rgba(123, 108, 246, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(255, 120, 180, 0.05) 0%, transparent 40%);
 }
 
 a {
     text-decoration: none;
     color: inherit;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==============================
-   Header
+   Header (战术终端风格)
    ============================== */
 .header {
-    background: linear-gradient(135deg, #7B6CF6, #B8A8FF);
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--kq-border);
     color: white;
-    padding: 36px 20px;
-    text-align: center;
+    padding: 24px 20px;
+    text-align: left;
+    position: relative;
+    z-index: 100;
 }
 
 .header-title {
-    font-size: 30px;
-    font-weight: 600;
-    letter-spacing: 1px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 0 15px var(--kq-purple-glow);
+    color: var(--kq-white);
 }
 
 .header-subtitle {
-    font-size: 14px;
-    opacity: 0.9;
-    margin-top: 6px;
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 4px;
+    color: var(--kq-pink);
+    letter-spacing: 1px;
 }
 
 /* ==============================
-   Nav
+   Nav (悬浮战术条)
    ============================== */
 .nav {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(6px);
-    padding: 14px 0;
+    background: rgba(15, 12, 35, 0.8);
+    backdrop-filter: blur(8px);
+    padding: 12px 0;
     text-align: center;
-    box-shadow: 0 6px 16px rgba(123,108,246,0.15);
+    border-bottom: 1px solid var(--kq-border);
 }
 
 .nav a {
     margin: 0 22px;
     font-weight: 500;
+    font-size: 14px;
     position: relative;
+    color: var(--kq-gray);
+    text-transform: uppercase;
+}
+
+.nav a:hover {
+    color: var(--kq-purple);
 }
 
 .nav a::after {
@@ -57,10 +106,10 @@ a {
     position: absolute;
     width: 0;
     height: 2px;
-    background: #7B6CF6;
+    background: var(--kq-pink);
     left: 0;
     bottom: -6px;
-    transition: width 0.3s;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav a:hover::after {
@@ -71,32 +120,42 @@ a {
    Container
    ============================== */
 .container {
-    max-width: 1050px;
-    margin: 50px auto;
+    max-width: 1100px;
+    margin: 40px auto;
     padding: 0 20px;
 }
 
 /* ==============================
-   Card
+   Card (战术面板)
    ============================== */
 .card {
-    background: #FFFFFF;
-    border-radius: 14px;
+    background: var(--kq-glass);
+    border: 1px solid var(--kq-border);
+    border-radius: 4px; /* 锐化边角更显专业 */
     padding: 26px;
     margin-bottom: 32px;
-    box-shadow:
-        0 8px 24px rgba(44,47,74,0.08),
-        0 0 0 1px #E0E3FF;
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(123, 108, 246, 0.05);
+}
+
+/* 顶部流光装饰线：模拟剑气划过的感觉 */
+.card::before {
+    content: "";
+    position: absolute;
+    top: -1px; left: 0;
+    width: 40px; height: 2px;
+    background: var(--kq-pink);
+    box-shadow: 0 0 10px var(--kq-pink);
 }
 
 .card-title {
     font-size: 19px;
     font-weight: 600;
     margin-bottom: 18px;
-    color: #2C2F4A;
-    border-left: 4px solid #7B6CF6;
+    color: var(--kq-white);
+    border-left: 4px solid var(--kq-purple);
     padding-left: 12px;
-    text-shadow: 0 0 6px rgba(123,108,246,0.35);
+    text-shadow: 0 0 10px var(--kq-purple-glow);
 }
 
 /* ==============================
@@ -106,49 +165,61 @@ label {
     display: block;
     margin-top: 14px;
     font-size: 14px;
+    color: var(--kq-gold);
 }
 
 input {
     width: 100%;
+    box-sizing: border-box;
     padding: 10px 12px;
     margin-top: 6px;
-    border-radius: 8px;
-    border: 1px solid #D6DAFF;
-    background: #FAFBFF;
+    border-radius: 4px;
+    border: 1px solid var(--kq-border);
+    background: rgba(0, 0, 0, 0.25);
+    color: white;
 }
 
 input:focus {
     outline: none;
-    border-color: #7B6CF6;
+    border-color: var(--kq-pink);
+    background: rgba(123, 108, 246, 0.05);
+    box-shadow: 0 0 10px rgba(255, 120, 180, 0.2);
 }
 
 /* ==============================
-   Button
+   Button (雷厉风行风格)
    ============================== */
 button {
     margin-top: 22px;
     padding: 12px 22px;
-    background: linear-gradient(135deg, #7B6CF6, #9A8CFF);
-    color: white;
-    border: none;
-    border-radius: 10px;
+    background: transparent;
+    color: var(--kq-purple);
+    border: 1px solid var(--kq-purple);
+    border-radius: 4px;
     font-size: 14px;
+    font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 6px 14px rgba(123,108,246,0.35);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: 0.3s;
 }
 
 button:hover {
-    opacity: 0.95;
+    background: var(--kq-purple);
+    color: white;
+    box-shadow: 0 0 15px var(--kq-purple-glow);
 }
 
 .btn-primary {
     display: inline-block;
     margin-top: 12px;
     padding: 8px 14px;
-    background: #ff78b4;
-    color: #000;
+    background: var(--kq-pink);
+    color: white;
     text-decoration: none;
-    border-radius: 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(255, 120, 180, 0.3);
 }
 
 /* ==============================
@@ -162,11 +233,15 @@ button:hover {
 .result img {
     width: 100%;
     margin-top: 20px;
+    border: 1px solid var(--kq-border);
 }
 
 .error {
-    color: #C62828;
-    font-weight: 500;
+    color: var(--kq-pink);
+    background: rgba(255, 120, 180, 0.1);
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
 }
 
 /* ==============================
@@ -176,7 +251,8 @@ button:hover {
     text-align: center;
     padding: 20px;
     font-size: 12px;
-    color: #777;
+    color: var(--kq-purple);
+    opacity: 0.5;
 }
 
 /* ==============================
@@ -187,109 +263,151 @@ button:hover {
     inset: 0;
     z-index: -1;
     pointer-events: none;
+    opacity: 0.7;
 }
 
 /* ==============================
-   Formula 面板
+   Formula 面板 (深度强化)
    ============================== */
 .formula-panel {
-  margin: 20px auto 30px;
-  padding: 18px 22px;
-  max-width: 900px;
-
-  background: rgba(30, 28, 60, 0.55);
-  border: 1px solid rgba(123, 108, 246, 0.35);
-  border-radius: 14px;
-
-  box-shadow:
-    inset 0 0 25px rgba(123,108,246,0.15),
-    0 0 25px rgba(123,108,246,0.25);
-
-  text-align: center;
+    margin: 20px auto 30px;
+    padding: 18px 22px;
+    max-width: 900px;
+    background: rgba(20, 15, 40, 0.85);
+    border: 1px solid var(--kq-purple);
+    border-radius: 8px;
+    box-shadow: 
+        inset 0 0 25px rgba(123, 108, 246, 0.15),
+        0 0 25px rgba(0, 0, 0, 0.5);
+    text-align: center;
 }
 
 .formula-block {
-  color: #e8e6ff;
-  font-size: 1.05em;
-  margin-bottom: 12px;
-}
-
-.formula-block mjx-container {
-  margin: 10px 0 !important;
+    color: var(--kq-white);
+    font-size: 1.05em;
+    margin-bottom: 12px;
 }
 
 .formula-bound {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;
-
-  font-size: 0.9em;
-  color: #ffb6d9;
-  opacity: 0.9;
-}
-
-.formula-bound .sep {
-  color: rgba(255,255,255,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.9em;
+    color: var(--kq-pink);
+    opacity: 0.9;
+    font-family: 'Courier New', monospace;
 }
 
 /* ==============================
    analysis 布局
    ============================== */
-
-html, body {
-  height: 100%;
-  margin: 0;
-}
-
 .analysis-layout {
-  display: flex;
-  height: 100vh;  /* 填满浏览器高度 */
-  gap: 10px;
+    display: flex;
+    height: 100vh;
+    gap: 12px;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 .analysis-sidebar {
-  width: 250px;      /* 左侧固定宽度 */
-  flex-shrink: 0;
-  overflow-y: auto;
+    width: 250px;
+    flex-shrink: 0;
+    background: var(--kq-glass);
+    border: 1px solid var(--kq-border);
+    border-radius: 4px;
+    overflow-y: auto;
 }
 
 .analysis-workspace {
-  flex-grow: 1;       /* 占剩余宽度 */
-  display: flex;
-  flex-direction: column;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .analysis-frame {
-  flex-grow: 1;      /* 占满 workspace 的剩余高度 */
-  width: 100%;       /* 填满 workspace 宽度 */
-  border: none;
+    flex-grow: 1;
+    width: 100%;
+    border: none;
+    background: transparent;
 }
 
 /* ==============================
    analysis 左侧列表
    ============================== */
 .anal-group-title {
-  font-weight: bold;
-  margin-top: 10px;
-  color: #aaa;
+    font-weight: bold;
+    margin: 15px 0 8px 10px;
+    color: var(--kq-gold);
+    font-size: 12px;
+    text-transform: uppercase;
 }
 
 .anal-list {
-  list-style: none;
-  padding-left: 0;
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
 }
 
 .anal-item {
-  padding: 6px 8px;
-  cursor: pointer;
-  border-radius: 6px;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    border-left: 2px solid transparent;
+    transition: 0.2s;
 }
 
 .anal-item:hover {
-  background: rgba(255,255,255,0.05);
+    background: rgba(123, 108, 246, 0.15);
+    color: var(--kq-white);
+    border-left: 2px solid var(--kq-purple);
 }
 
 .anal-group.disabled {
-  opacity: 0.4;
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ==============================
+   [以下为首页翻页及标题增强逻辑 - 追加部分]
+   ============================== */
+.main-wrapper {
+    height: 100vh;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+}
+.main-wrapper::-webkit-scrollbar { display: none; }
+
+.page-section {
+    height: 100vh;
+    width: 100%;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.hero-content {
+    text-align: center;
+}
+
+.glitch-title {
+    font-size: 5.5rem; /* 超大标题 */
+    font-weight: 900;
+    letter-spacing: 4px;
+    margin: 0;
+    text-shadow: 0 0 30px var(--kq-purple-glow);
+}
+
+.main-subtitle {
+    font-size: 1.2rem;
+    color: var(--kq-pink);
+    letter-spacing: 8px;
+    margin-top: 15px;
+    opacity: 0.8;
 }

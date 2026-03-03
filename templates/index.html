@@ -1,46 +1,270 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="hero-section">
-    <h1 class="glitch-text" data-text="QUANTUM ENTANGLEMENT">QUANTUM ENTANGLEMENT</h1>
-    <p class="subtitle">量子纠缠分析与可视化平台</p>
-</div>
+<canvas id="bg-canvas-index"></canvas>
 
-<div class="glass-grid">
-    <div class="card glass-card ripple-effect">
-        <div class="card-title"><i class="fas fa-bullseye"></i> 平台定位</div>
-        <p class="result">
-            本平台以量子纠缠与非定域性为核心研究对象，
-            利用 <span class="highlight">数值计算</span> 与 <span class="highlight">多维可视化</span> 手段，
-            将抽象的量子信息理论转化为可交互、可视化的科研工具。
-        </p>
-        <div class="card-bg-icon">⚛</div>
-    </div>
-
-    <div class="card glass-card ripple-effect">
-        <div class="card-title"><i class="fas fa-cubes"></i> 核心矩阵</div>
-        <ul class="result feature-list">
-            <li><span class="pulse-dot"></span> <strong>Schmidt 分解：</strong> 纯态纠缠结构深度剖析</li>
-            <li><span class="pulse-dot"></span> <strong>CHSH 不等式：</strong> 贝尔非定域性实时违背分析</li>
-            <li><span class="pulse-dot"></span> <strong>混合态分析：</strong> 基于 PPT 判据与 Werner 态的纠缠量化</li>
-        </ul>
-    </div>
-
-    <div class="card glass-card experiment-card">
-        <div class="card-title"><i class="fas fa-flask"></i> 实验空间</div>
-        <p class="result">
-            准备好探索量子世界的奇妙相关性了吗？
-        </p>
-        <div class="btn-container">
-            <a href="/analysis" class="neon-btn">
-                <span></span>
-                <span></span>
-                <span></span>
-                <span></span>
-                进入实验中心
-            </a>
+<div class="fullpage-wrapper" id="main-scroller">
+    
+    <section class="page-section hero-page">
+        <div class="hero-center">
+            <h1 class="glitch-title" data-text="QUANTUM ENTANGLEMENT">QUANTUM ENTANGLEMENT</h1>
+            <div class="subtitle-wrap">
+                <span class="line-decor"></span>
+                <p class="main-subtitle">量子纠缠分析与可视化综合平台</p>
+                <span class="line-decor"></span>
+            </div>
         </div>
-    </div>
+        <div class="scroll-hint">
+            <span>SCROLL TO EXPLORE</span>
+            <div class="mouse-icon"><div class="wheel"></div></div>
+        </div>
+    </section>
+
+    <section class="page-section">
+        <div class="content-box">
+            <div class="card">
+                <div class="card-title">平台定位 / MISSION</div>
+                <div class="result">
+                    <p>本平台致力于量子纠缠与非定域性的深度研究。通过集成多种数值计算算子与多维可视化引擎，将复杂的物理模型转化为直观的交互工具，辅助科研人员与学习者深入理解量子信息的核心机理。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="page-section">
+        <div class="content-box">
+            <div class="card">
+                <div class="card-title">功能阵列 / ALGORITHMS</div>
+                <div class="feature-matrix">
+                    <div class="f-item"><h4>态结构分析</h4><p>Schmidt 分解 / Von Neumann 熵</p></div>
+                    <div class="f-item"><h4>非定域性</h4><p>CHSH 不等式 / PPT 判据</p></div>
+                    <div class="f-item"><h4>量子度量</h4><p>Fidelity / Concurrence</p></div>
+                    <div class="f-item"><h4>可视化</h4><p>3D 轨迹 / Bloch 球表征</p></div>
+                </div>
+                <div style="text-align: center; margin-top: 40px;">
+                    <a href="/analysis" class="btn-primary" style="padding: 12px 35px; text-decoration: none;">进入计算实验中心</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="page-section">
+        <div class="content-box">
+            <div class="card">
+                <div class="card-title">展望 / VISION</div>
+                <div class="result">
+                    <p>随着量子硬件的快速迭代，纠缠资源的精确量化将成为关键。未来平台将引入对多体纠缠及开放量子系统的全面支持。</p>
+                </div>
+                <div class="footer-simple" style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 11px; opacity: 0.5; color: var(--kq-purple);">
+                    <span>© 2026 QUANTUM LAB</span>
+                    <span>CONTACT: RESEARCH@UNI.EDU</span>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
+
+<script>
+    /* --- 1. 渐变翻页逻辑 (先快后慢) --- */
+    let currentSection = 0;
+    const scroller = document.getElementById('main-scroller');
+    const sections = document.querySelectorAll('.page-section');
+    const totalSections = sections.length;
+    let isScrolling = false;
+
+    // 监听滚轮事件
+    window.addEventListener('wheel', (e) => {
+        if (isScrolling) return;
+
+        if (e.deltaY > 0 && currentSection < totalSections - 1) {
+            currentSection++;
+            performScroll();
+        } else if (e.deltaY < 0 && currentSection > 0) {
+            currentSection--;
+            performScroll();
+        }
+    }, { passive: true });
+
+    function performScroll() {
+        isScrolling = true;
+        // 使用 CSS transform 实现平滑移动
+        sections.forEach(sec => {
+            sec.style.transform = `translateY(-${currentSection * 100}%)`;
+        });
+        
+        // 锁定时间与 CSS transition 一致 (1.2s)
+        setTimeout(() => { isScrolling = false; }, 1200);
+    }
+
+    /* --- 2. 增强型背景点线脚本 --- */
+    const canvas = document.getElementById("bg-canvas-index");
+    const ctx = canvas.getContext("2d");
+    let particles = [];
+    
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    class P {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.4;
+            this.vy = (Math.random() - 0.5) * 0.4;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        }
+        draw() {
+            // 增强粒子亮度
+            ctx.fillStyle = "rgba(123, 108, 246, 0.85)";
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    for(let i=0; i<100; i++) particles.push(new P());
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            p.update(); p.draw();
+            particles.forEach(p2 => {
+                let d = Math.hypot(p.x - p2.x, p.y - p2.y);
+                if(d < 150) {
+                    // 增强连线对比度
+                    ctx.strokeStyle = `rgba(123, 108, 246, ${0.35 * (1 - d/150)})`;
+                    ctx.lineWidth = 0.8;
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                }
+            });
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+
+<style>
+    /* 1. 基础布局与强制透明 */
+    html, body {
+        height: 100%;
+        margin: 0;
+        background-color: #05050a; 
+        overflow: hidden; /* 必须禁用原生滚动条 */
+    }
+
+    #bg-canvas-index {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .fullpage-wrapper {
+        position: relative;
+        z-index: 10;
+        height: 100vh;
+        width: 100%;
+    }
+
+    .page-section {
+        height: 100vh;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        /* 关键：先快后慢的缓动曲线 cubic-bezier */
+        transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: transform;
+    }
+
+    /* 2. 标题与特效样式 */
+    .hero-center { text-align: center; }
+    .glitch-title {
+        font-size: 5.5rem;
+        font-weight: 900;
+        color: #ffffff;
+        text-shadow: 0 0 25px rgba(123, 108, 246, 0.6);
+        margin: 0;
+        letter-spacing: 4px;
+    }
+
+    .subtitle-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 15px;
+    }
+    .line-decor { width: 60px; height: 1px; background: #7b6cf6; opacity: 0.5; }
+    .main-subtitle { font-size: 1.3rem; color: #f688ff; letter-spacing: 8px; margin: 0; }
+
+    /* 3. 卡片与内容排版 (增加通透感) */
+    .content-box { width: 100%; max-width: 850px; padding: 20px; }
+    .card {
+        background: rgba(15, 12, 35, 0.65);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(123, 108, 246, 0.2);
+        padding: 40px;
+        border-radius: 4px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .card-title {
+        font-size: 1.2rem;
+        color: #ffd700;
+        border-bottom: 1px solid rgba(123, 108, 246, 0.3);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        letter-spacing: 2px;
+    }
+    .result p { line-height: 1.8; color: #cccccc; font-size: 1rem; }
+
+    .feature-matrix {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 25px;
+    }
+    .f-item {
+        background: rgba(123, 108, 246, 0.12);
+        border: 1px solid rgba(123, 108, 246, 0.2);
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+    .f-item:hover {
+        background: rgba(123, 108, 246, 0.2);
+        border-color: #7b6cf6;
+        transform: translateY(-5px);
+    }
+    .f-item h4 { color: #f688ff; margin: 0 0 8px 0; font-size: 1rem; }
+    .f-item p { color: #999; font-size: 0.85rem; margin: 0; }
+
+    /* 4. 滚动引导图标 */
+    .scroll-hint { position: absolute; bottom: 40px; text-align: center; width: 100%; color: rgba(255,255,255,0.4); font-size: 11px; letter-spacing: 3px; }
+    .mouse-icon {
+        width: 24px; height: 40px;
+        border: 2px solid #7b6cf6;
+        border-radius: 12px;
+        margin: 12px auto;
+        position: relative;
+    }
+    .wheel {
+        width: 4px; height: 8px;
+        background: #f688ff;
+        border-radius: 2px;
+        position: absolute;
+        top: 6px; left: 50%;
+        transform: translateX(-50%);
+        animation: wheel-move 2s infinite;
+    }
+    @keyframes wheel-move { 0% { top: 6px; opacity: 1; } 100% { top: 25px; opacity: 0; } }
+</style>
 
 {% endblock %}
