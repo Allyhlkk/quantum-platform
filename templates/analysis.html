@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block content %}
 <style>
@@ -63,12 +63,16 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        min-height: 0;
         background: var(--kq-glass);
     }
     .anal-list-wrapper {
         flex-grow: 1;
         overflow-y: auto; 
         padding-right: 5px;
+        padding-bottom: 36px;
+        scroll-padding-bottom: 36px;
+        overscroll-behavior: contain;
     }
 
     .analysis-workspace {
@@ -89,10 +93,19 @@
         overflow: auto; 
     }
 
+    /* 列表项高亮样式 */
+    .anal-item.active {
+        background: rgba(123, 108, 246, 0.2);
+        color: var(--kq-pink) !important;
+        border-left: 3px solid var(--kq-pink);
+        padding-left: 12px; /* 补偿边框宽度 */
+        font-weight: bold;
+    }
+
     /* =========================================
        3. 3D 轮盘视图 (修正交互体验)
        ========================================= */
-    .carousel-layout {
+.carousel-layout {
         display: flex;
         height: calc(100vh - 160px); 
         margin-top: 10px;
@@ -107,9 +120,14 @@
         position: relative;
         perspective: 1500px;
         cursor: grab;
-        /* 防止拖拽时选中文字 */
         user-select: none; 
         -webkit-user-select: none;
+        z-index: 5; /* 明确层级 */
+    }
+    /* 新增：切换时彻底移除点击拦截 */
+    .carousel-hidden { 
+        pointer-events: none !important; 
+        z-index: -1 !important; 
     }
     .carousel-layout:active { cursor: grabbing; }
 
@@ -172,8 +190,240 @@
         line-height: 1.5;
         pointer-events: none;
     }
-</style>
 
+    .workspace-tools {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 10px 14px 6px 14px;
+    }
+
+    .workspace-tools button {
+        margin-top: 0;
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--kq-border);
+        background: rgba(123, 108, 246, 0.12);
+        color: var(--kq-white);
+        cursor: pointer;
+    }
+
+    .workspace-tools button:hover {
+        background: rgba(123, 108, 246, 0.24);
+    }
+
+    .iframe-loadbar {
+        margin: 0 14px;
+        height: 2px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(-2px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .iframe-loadbar.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .iframe-loadbar > div {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #7b6cf6, #ff78b4);
+        box-shadow: 0 0 10px rgba(123, 108, 246, 0.45);
+        transition: width 0.15s ease;
+    }
+
+    .workspace-status {
+        padding: 0 14px 8px 14px;
+        color: #aee1ff;
+        font-size: 13px;
+        min-height: 20px;
+    }
+
+    .record-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2200;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+
+    .record-modal.show {
+        display: flex;
+    }
+
+    .report-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.62);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2250;
+        padding: 16px;
+        box-sizing: border-box;
+    }
+
+    .report-modal.show {
+        display: flex;
+    }
+
+    .report-dialog {
+        width: min(1120px, 96vw);
+        max-height: 88vh;
+        overflow: auto;
+        background: rgba(11, 9, 26, 0.98);
+        border: 1px solid rgba(123, 108, 246, 0.34);
+        border-radius: 10px;
+        padding: 12px;
+    }
+
+    .report-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .report-canvas-wrap {
+        width: 100%;
+        overflow: auto;
+        border: 1px solid rgba(123, 108, 246, 0.26);
+        border-radius: 8px;
+        background: rgba(8, 7, 18, 0.85);
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .report-canvas-wrap canvas {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 6px;
+        background: #0a0718;
+    }
+
+    .record-dialog {
+        width: min(980px, 96vw);
+        max-height: 82vh;
+        overflow: auto;
+        background: rgba(15, 12, 35, 0.98);
+        border: 1px solid var(--kq-border);
+        border-radius: 10px;
+        padding: 12px;
+    }
+
+    .record-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .record-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 13px;
+    }
+
+    .record-table th,
+    .record-table td {
+        border-bottom: 1px solid rgba(123, 108, 246, 0.2);
+        padding: 8px 6px;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    .record-table th {
+        color: #aab1d8;
+        font-weight: 600;
+    }
+
+    .record-actions {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .record-search {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .record-search input {
+        margin-top: 0;
+        width: min(420px, 100%);
+    }
+
+    .workspace-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px 0 14px;
+    }
+
+    .workspace-head .card-title {
+        margin: 0;
+        padding: 0;
+    }
+
+    .formula-search-wrap {
+        position: relative;
+        width: min(390px, 52vw);
+    }
+
+    .formula-search-wrap input {
+        margin-top: 0;
+        width: 100%;
+    }
+
+    .formula-search-list {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        border: 1px solid rgba(123, 108, 246, 0.35);
+        border-radius: 8px;
+        background: rgba(12, 10, 30, 0.98);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.38);
+        max-height: 280px;
+        overflow: auto;
+        z-index: 2000;
+        display: none;
+    }
+
+    .formula-search-item {
+        padding: 8px 10px;
+        border-bottom: 1px solid rgba(123, 108, 246, 0.15);
+        cursor: pointer;
+        font-size: 13px;
+        color: #d7dbff;
+    }
+
+    .formula-search-item:last-child {
+        border-bottom: none;
+    }
+
+    .formula-search-item:hover,
+    .formula-search-item.active {
+        background: rgba(123, 108, 246, 0.22);
+        color: #fff;
+    }
+</style>
 <div class="view-controls">
     <button id="btn-classic" class="view-btn" onclick="switchView('classic')">经典分析模式</button>
     <button id="btn-carousel" class="view-btn active" onclick="switchView('carousel')">3D 轮盘模式</button>
@@ -184,41 +434,123 @@
         <div class="card-title">分析列表</div>
         <div class="anal-list-wrapper">
             <div class="anal-group">
-                <div class="anal-group-title">纠缠结构分析</div>
+                <div class="anal-group-title">新手入门</div>
+                <ul class="anal-list">
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/beginner_guide')">新手导览（先看）</li>
+                </ul>
+            </div>
+            <div class="anal-group">
+                <div class="anal-group-title">纠缠结构与基础</div>
                 <ul class="anal-list">
                     <li class="anal-item" onclick="loadAnalysis('/analysis/formula/schmidt')">Schmidt 分解</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/fidelity')">State Fidelity (保真度)</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/purity')">Purity (纯度)</li>
                 </ul>
             </div>
             <div class="anal-group">
-                <div class="anal-group-title">非定域性判据</div>
+                <div class="anal-group-title">量子非定域性判据</div>
                 <ul class="anal-list">
                     <li class="anal-item" onclick="loadAnalysis('/analysis/formula/chsh')">CHSH 不等式</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/chsh_horodecki')">CHSH Horodecki (S_max)</li>
                 </ul>
             </div>
             <div class="anal-group">
-                <div class="anal-group-title">混合态判据与度量</div>
+                <div class="anal-group-title">可分性判据 (Separability)</div>
                 <ul class="anal-list">
-                    <li class="anal-item" onclick="loadAnalysis('/analysis/purity')">Purity (纯度)</li>
-                    <li class="anal-item" onclick="loadAnalysis('/analysis/von_neumann')">Von Neumann 熵</li>
                     <li class="anal-item" onclick="loadAnalysis('/analysis/formula/ppt')">PPT 判据</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/ccnr')">CCNR / Realignment</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/reduction')">Reduction 判据</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/criteria_compare')">三判据对比热图</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/ml_classifier')">ML Classifier (LogReg/SVM)</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/witness')">Entanglement Witness</li>
+                </ul>
+            </div>
+            <div class="anal-group">
+                <div class="anal-group-title">纠缠度量与熵 (Measures)</div>
+                <ul class="anal-list">
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/von_neumann')">Von Neumann 熵</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/linear_entropy')">Linear Entropy (S_L)</li>
                     <li class="anal-item" onclick="loadAnalysis('/analysis/formula/concurrence')">Concurrence</li>
                     <li class="anal-item" onclick="loadAnalysis('/analysis/formation')">形成纠缠度 (EoF)</li>
-                    <li class="anal-item" onclick="loadAnalysis('/analysis/fidelity')">State Fidelity (保真度)</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/geometric')">Geometric Measure (几何度量)</li>
                     <li class="anal-item" onclick="loadAnalysis('/analysis/coherence')">Quantum Coherence (相干性)</li>
-                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/witness')">Entanglement Witness</li>
-                    <li class="anal-item" onclick="loadAnalysis('/analysis/geometric')">Geometric Measure (几何纠缠)</li>
+                </ul>
+            </div>
+            <div class="anal-group">
+                <div class="anal-group-title">高级可视化</div>
+                <ul class="anal-list">
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/advanced_3d')">Advanced 3D 曲面演示</li>
                 </ul>
             </div>
         </div>
     </aside>
     <section class="analysis-workspace card">
-        <div class="card-title">分析操作区</div>
-        <iframe id="analysis-frame" src="/analysis/formula/schmidt" frameborder="0" class="analysis-frame"></iframe>
-    </section>
+        <div class="workspace-head">
+            <div class="card-title">分析操作区</div>
+            <div class="formula-search-wrap">
+                <input id="formula-search-input" type="text" placeholder="搜索公式/页面（如：PPT、Concurrence、熵）">
+                <div id="formula-search-list" class="formula-search-list"></div>
+            </div>
+        </div>
+        <div class="workspace-tools">
+    <button type="button" onclick="saveCurrentRecord()">保存本次实验</button>
+    <button type="button" onclick="openRecordModal()">查看历史记录</button>
+    <button type="button" onclick="exportCurrentSnapshotJson()">导出当前JSON</button>
+    <button type="button" onclick="exportCurrentFigurePng()">导出当前图PNG</button>
+    <button type="button" onclick="exportRecordCsv()">导出记录CSV</button>
+    <button type="button" onclick="openCurrentReportCard()">生成当前报告卡</button>
+    <button type="button" id="fx-toggle-btn" onclick="toggleBackgroundFx()">动态背景：开</button>
+    <button type="button" id="cinematic-toggle-btn" onclick="toggleCinematicMode()">视觉模式：炫酷</button>
+</div>
+<div class="iframe-loadbar" id="iframe-loadbar"><div id="iframe-loadbar-inner"></div></div>
+<div class="workspace-status" id="workspace-status">就绪。</div>
+<iframe id="analysis-frame" src="/analysis/formula/schmidt" frameborder="0" class="analysis-frame"></iframe>
+</section>
+</div>
+
+<div id="record-modal" class="record-modal">
+    <div class="record-dialog">
+        <div class="record-head">
+            <h3 style="margin:0;">实验记录</h3>
+            <div class="record-actions">
+                <button type="button" onclick="refreshRecordList()">刷新</button>
+                <button type="button" onclick="clearAllRecords()">清空全部</button>
+                <button type="button" onclick="exportRecordCsv()">导出CSV</button>
+                <button type="button" onclick="closeRecordModal()">关闭</button>
+            </div>
+        </div>
+        <div class="record-search">
+            <input id="record-search-input" type="text" placeholder="搜索页面/URL/当前解释/备注（支持模糊匹配）" onkeydown="if(event.key==='Enter'){refreshRecordList();}">
+            <button type="button" onclick="refreshRecordList()">搜索</button>
+            <button type="button" onclick="clearRecordSearch()">重置</button>
+        </div>
+        <div id="record-list-wrap" style="margin-top:8px; color:#d7dbff;">加载中...</div>
+    </div>
+</div>
+
+<div id="report-modal" class="report-modal">
+    <div class="report-dialog">
+        <div class="report-head">
+            <h3 style="margin:0;">实验报告卡预览</h3>
+            <div class="record-actions">
+                <button type="button" onclick="exportReportCardPng()">导出报告卡 PNG</button>
+                <button type="button" onclick="exportReportCardPdf()">导出报告卡 PDF</button>
+                <button type="button" onclick="closeReportModal()">关闭</button>
+            </div>
+        </div>
+        <div class="report-canvas-wrap">
+            <canvas id="report-card-canvas" width="1200" height="760"></canvas>
+        </div>
+    </div>
 </div>
 
 <div id="view-carousel" class="carousel-layout">
     <div class="q-track" id="q-track">
+        <div class="q-card" onclick="handleCardClick('/analysis/beginner_guide')">
+            <span class="q-icon">🧭</span>
+            <div class="q-title">新手导览</div>
+            <div class="q-desc">公式意义、读图方法、建议路线</div>
+        </div>
         <div class="q-card" onclick="handleCardClick('/analysis/formula/schmidt')">
             <span class="q-icon">⚡</span>
             <div class="q-title">Schmidt 分解</div>
@@ -229,30 +561,65 @@
             <div class="q-title">CHSH 不等式</div>
             <div class="q-desc">非定域性判据测量</div>
         </div>
-        <div class="q-card" onclick="handleCardClick('/analysis/purity')">
-            <span class="q-icon">✨</span>
-            <div class="q-title">Purity (纯度)</div>
-            <div class="q-desc">量子态混合度基础检测</div>
-        </div>
-        <div class="q-card" onclick="handleCardClick('/analysis/von_neumann')">
-            <span class="q-icon">🌀</span>
-            <div class="q-title">Von Neumann 熵</div>
-            <div class="q-desc">混合态信息熵计算</div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/chsh_horodecki')">
+            <span class="q-icon">📐</span>
+            <div class="q-title">CHSH Horodecki</div>
+            <div class="q-desc">最优 CHSH 上界 S_max</div>
         </div>
         <div class="q-card" onclick="handleCardClick('/analysis/formula/ppt')">
             <span class="q-icon">🔍</span>
             <div class="q-title">PPT 判据</div>
             <div class="q-desc">部分转置正定性检测</div>
         </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/ccnr')">
+            <span class="q-icon">🧩</span>
+            <div class="q-title">CCNR / Realignment</div>
+            <div class="q-desc">交叉范数/重排判据</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/criteria_compare')">
+            <span class="q-icon">🗺️</span>
+            <div class="q-title">Criteria Heatmaps</div>
+            <div class="q-desc">PPT/CCNR/Reduction 同屏对比</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/advanced_3d')">
+            <span class="q-icon">🌌</span>
+            <div class="q-title">Advanced 3D Surface</div>
+            <div class="q-desc">参数空间三维曲面与阈值观测</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/ml_classifier')">
+            <span class="q-icon">🧠</span>
+            <div class="q-title">ML Classifier</div>
+            <div class="q-desc">LogReg / SVM + Confusion Matrix</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/witness')">
+            <span class="q-icon">🛡️</span>
+            <div class="q-title">Entanglement Witness</div>
+            <div class="q-desc">量子纠缠见证者判据</div>
+        </div>
         <div class="q-card" onclick="handleCardClick('/analysis/formula/concurrence')">
             <span class="q-icon">🔗</span>
             <div class="q-title">Concurrence</div>
             <div class="q-desc">双量子位纠缠度量</div>
         </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/linear_entropy')">
+            <span class="q-icon">📉</span>
+            <div class="q-title">Linear Entropy</div>
+            <div class="q-desc">混合度 S_L 与纠缠相图</div>
+        </div>
         <div class="q-card" onclick="handleCardClick('/analysis/formation')">
             <span class="q-icon">🧬</span>
             <div class="q-title">形成纠缠度 (EoF)</div>
-            <div class="q-desc">构建量子态所需纠缠资源</div>
+            <div class="q-desc">构建量子态所需资源度量</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/geometric')">
+            <span class="q-icon">📐</span>
+            <div class="q-title">Geometric Measure</div>
+            <div class="q-desc">与最近可分态的几何距离</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/coherence')">
+            <span class="q-icon">🌈</span>
+            <div class="q-title">Quantum Coherence</div>
+            <div class="q-desc">量子相干性资源分析</div>
         </div>
         <div class="q-card" onclick="handleCardClick('/analysis/fidelity')">
             <span class="q-icon">🎯</span>
@@ -281,6 +648,383 @@ let physics = {
 };
 
 physics.totalWidth = cards.length * physics.gap;
+let pendingRestoreParams = null;
+let recordCache = [];
+let formulaCatalog = [];
+let formulaSearchResults = [];
+let formulaSearchActiveIndex = -1;
+let iframeLoadTimer = null;
+let iframeLoadProgress = 0;
+
+const formulaAliasMap = {
+    "/analysis/formula/ppt": ["ppt", "偏转置", "negativity", "部分转置", "min eigen"],
+    "/analysis/formula/ccnr": ["ccnr", "realignment", "重排", "迹范数"],
+    "/analysis/formula/reduction": ["reduction", "约化", "mina", "minb"],
+    "/analysis/formula/chsh": ["chsh", "bell", "非定域", "smax"],
+    "/analysis/formula/chsh_horodecki": ["horodecki", "chsh max", "s_max", "非定域"],
+    "/analysis/formula/witness": ["witness", "见证者", "可观测量"],
+    "/analysis/formula/concurrence": ["concurrence", "共生", "纠缠度"],
+    "/analysis/formula/linear_entropy": ["linear entropy", "线性熵", "sl", "混合度"],
+    "/analysis/fidelity": ["fidelity", "保真度", "重合度"],
+    "/analysis/purity": ["purity", "纯度", "trrho2"],
+    "/analysis/von_neumann": ["von neumann", "冯诺依曼", "熵", "entropy"],
+    "/analysis/formation": ["eof", "formation", "形成纠缠度"],
+    "/analysis/geometric": ["geometric", "几何纠缠", "距离"],
+    "/analysis/coherence": ["coherence", "相干性", "l1"],
+    "/analysis/ml_classifier": ["ml", "svm", "logreg", "分类器", "混淆矩阵"],
+    "/analysis/criteria_compare": ["热图", "criteria", "三判据", "对比", "slice"],
+    "/analysis/advanced_3d": ["3d", "曲面", "surface", "theta", "p-theta"],
+    "/analysis/formula/schmidt": ["schmidt", "施密特", "rank", "纯态分解"],
+    "/analysis/beginner_guide": ["新手", "导览", "beginner", "guide"],
+};
+
+function setWorkspaceStatus(text, isError = false) {
+    const el = document.getElementById("workspace-status");
+    if (!el) return;
+    el.textContent = text;
+    el.style.color = isError ? "#ff9ea6" : "#aee1ff";
+}
+
+function getFrameContext() {
+    const frame = document.getElementById("analysis-frame");
+    const win = frame.contentWindow;
+    const doc = frame.contentDocument || (win ? win.document : null);
+    const url = frame.src ? new URL(frame.src).pathname : "";
+    return {frame, win, doc, url};
+}
+
+function collectFrameParams(doc) {
+    const params = {};
+    if (!doc) return params;
+    const elements = doc.querySelectorAll("input, select, textarea");
+    elements.forEach(el => {
+        const key = el.id || el.name;
+        if (!key) return;
+        if (["button", "submit", "reset"].includes(el.type)) return;
+        if (el.type === "checkbox") {
+            params[key] = !!el.checked;
+            return;
+        }
+        if (el.type === "radio") {
+            if (el.checked) params[key] = el.value;
+            return;
+        }
+        params[key] = el.value;
+    });
+    return params;
+}
+
+function collectFrameExplanation(doc) {
+    if (!doc) return "";
+    const specific = doc.querySelector('[id*="guide"], [id*="interpret"]');
+    if (specific && specific.textContent) {
+        const t = specific.textContent.trim();
+        if (t) return t;
+    }
+    const allP = Array.from(doc.querySelectorAll("p"));
+    const hit = allP.find(p => (p.textContent || "").includes("当前解释"));
+    return hit ? hit.textContent.trim() : "";
+}
+
+function collectFrameTitle(doc) {
+    if (!doc) return "";
+    const h2 = doc.querySelector("h2");
+    if (h2 && h2.textContent) return h2.textContent.trim();
+    return (doc.title || "").trim();
+}
+
+function triggerElement(el) {
+    el.dispatchEvent(new Event("input", {bubbles: true}));
+    el.dispatchEvent(new Event("change", {bubbles: true}));
+}
+
+function applyParamsToFrame(doc, params) {
+    if (!doc || !params || typeof params !== "object") return;
+    Object.entries(params).forEach(([key, value]) => {
+        let el = doc.getElementById(key);
+        if (!el) {
+            const byName = doc.getElementsByName(key);
+            if (byName && byName.length) el = byName[0];
+        }
+        if (!el) return;
+
+        if (el.type === "checkbox") {
+            el.checked = value === true || value === "true" || value === 1 || value === "1";
+            triggerElement(el);
+            return;
+        }
+        if (el.type === "radio") {
+            const radios = doc.querySelectorAll(`input[type="radio"][name="${el.name}"]`);
+            radios.forEach(r => {
+                r.checked = String(r.value) === String(value);
+                if (r.checked) triggerElement(r);
+            });
+            return;
+        }
+        el.value = value;
+        triggerElement(el);
+    });
+}
+
+function downloadBlob(content, fileName, mime = "application/octet-stream") {
+    const blob = new Blob([content], {type: mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+function escHtml(s) {
+    return String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
+function escAttr(s) {
+    return escHtml(s).replace(/\n/g, " ");
+}
+
+function makeTimestamp() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+function syncIframeFxState() {
+    const frame = document.getElementById("analysis-frame");
+    if (!frame || !frame.contentDocument || !frame.contentDocument.body) return;
+    const off = document.body.classList.contains("fx-lite-off");
+    const cinematic = document.body.classList.contains("fx-cinematic");
+    frame.contentDocument.body.classList.toggle("fx-lite-off", off);
+    frame.contentDocument.body.classList.toggle("fx-cinematic", cinematic);
+}
+
+function refreshFxToggleButton() {
+    const btn = document.getElementById("fx-toggle-btn");
+    if (!btn) return;
+    const off = document.body.classList.contains("fx-lite-off");
+    btn.textContent = off ? "动态背景：关" : "动态背景：开";
+}
+
+function refreshCinematicToggleButton() {
+    const btn = document.getElementById("cinematic-toggle-btn");
+    if (!btn) return;
+    const on = document.body.classList.contains("fx-cinematic");
+    btn.textContent = on ? "视觉模式：炫酷" : "视觉模式：标准";
+}
+
+function toggleBackgroundFx() {
+    const off = !document.body.classList.contains("fx-lite-off");
+    document.body.classList.toggle("fx-lite-off", off);
+    try {
+        localStorage.setItem("kq_fx_off", off ? "1" : "0");
+    } catch (_) {}
+    refreshFxToggleButton();
+    syncIframeFxState();
+}
+
+function toggleCinematicMode() {
+    const current = document.body.classList.contains("fx-cinematic");
+    const next = !current;
+    if (window.KQEnhance && typeof window.KQEnhance.setCinematic === "function") {
+        window.KQEnhance.setCinematic(next);
+    } else {
+        document.body.classList.toggle("fx-cinematic", next);
+    }
+    refreshCinematicToggleButton();
+    syncIframeFxState();
+    setWorkspaceStatus(next ? "已切换为炫酷视觉模式。" : "已切换为标准视觉模式。");
+}
+
+function startIframeLoadBar() {
+    const bar = document.getElementById("iframe-loadbar");
+    const inner = document.getElementById("iframe-loadbar-inner");
+    if (!bar || !inner) return;
+    if (iframeLoadTimer) window.clearInterval(iframeLoadTimer);
+    iframeLoadProgress = 8;
+    inner.style.width = `${iframeLoadProgress}%`;
+    bar.classList.add("show");
+    iframeLoadTimer = window.setInterval(() => {
+        if (iframeLoadProgress >= 88) return;
+        iframeLoadProgress += Math.max(0.8, (92 - iframeLoadProgress) * 0.1);
+        inner.style.width = `${Math.min(88, iframeLoadProgress)}%`;
+    }, 80);
+}
+
+function finishIframeLoadBar() {
+    const bar = document.getElementById("iframe-loadbar");
+    const inner = document.getElementById("iframe-loadbar-inner");
+    if (!bar || !inner) return;
+    if (iframeLoadTimer) {
+        window.clearInterval(iframeLoadTimer);
+        iframeLoadTimer = null;
+    }
+    inner.style.width = "100%";
+    window.setTimeout(() => {
+        bar.classList.remove("show");
+        inner.style.width = "0%";
+    }, 180);
+}
+
+function normalizeSearchText(s) {
+    return String(s || "")
+        .toLowerCase()
+        .replace(/[\s\-_()/（）[\]{}]/g, "")
+        .trim();
+}
+
+function buildFormulaCatalog() {
+    const seen = new Set();
+    const out = [];
+    document.querySelectorAll(".anal-item").forEach(item => {
+        const text = (item.textContent || "").trim();
+        const onclick = item.getAttribute("onclick") || "";
+        const m = onclick.match(/'([^']+)'/);
+        if (!m) return;
+        const url = m[1];
+        const aliases = formulaAliasMap[url] || [];
+        const tokens = [
+            text,
+            url,
+            ...aliases,
+            ...url.split("/").filter(Boolean),
+        ];
+        const key = `${text}@@${url}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push({
+            label: text,
+            url,
+            normLabel: normalizeSearchText(text),
+            normUrl: normalizeSearchText(url),
+            normBlob: normalizeSearchText(tokens.join(" ")),
+        });
+    });
+    formulaCatalog = out;
+}
+
+function scoreFormula(item, qNorm) {
+    if (!qNorm) return -1;
+    if (item.normLabel === qNorm) return 100;
+    if (item.normLabel.startsWith(qNorm)) return 90;
+    if (item.normBlob.startsWith(qNorm)) return 86;
+    if (item.normLabel.includes(qNorm)) return 80;
+    if (item.normBlob.includes(qNorm)) return 72;
+    if (item.normUrl.includes(qNorm)) return 60;
+    return -1;
+}
+
+function runFormulaSearch(rawQ) {
+    const qNorm = normalizeSearchText(rawQ);
+    if (!qNorm) return [];
+    return formulaCatalog
+        .map(item => ({item, score: scoreFormula(item, qNorm)}))
+        .filter(x => x.score >= 0)
+        .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
+        .slice(0, 8)
+        .map(x => x.item);
+}
+
+function hideFormulaSearchList() {
+    const box = document.getElementById("formula-search-list");
+    box.style.display = "none";
+    box.innerHTML = "";
+    formulaSearchResults = [];
+    formulaSearchActiveIndex = -1;
+}
+
+function syncFormulaSearchInput(url) {
+    const input = document.getElementById("formula-search-input");
+    if (!input) return;
+    const hit = formulaCatalog.find(x => x.url === url);
+    input.value = hit ? hit.label : "";
+    hideFormulaSearchList();
+}
+
+function jumpToFormulaFromSearch(item) {
+    if (!item) return;
+    loadAnalysis(item.url);
+    switchView("classic");
+    syncFormulaSearchInput(item.url);
+    setWorkspaceStatus(`已跳转：${item.label}`);
+}
+
+function renderFormulaSearchList(items) {
+    const box = document.getElementById("formula-search-list");
+    if (!items.length) {
+        box.style.display = "none";
+        box.innerHTML = "";
+        formulaSearchResults = [];
+        formulaSearchActiveIndex = -1;
+        return;
+    }
+    formulaSearchResults = items;
+    formulaSearchActiveIndex = 0;
+    box.innerHTML = items.map((it, idx) => `
+        <div class="formula-search-item ${idx === 0 ? "active" : ""}" data-idx="${idx}">
+            ${escHtml(it.label)}
+        </div>
+    `).join("");
+    box.style.display = "block";
+    box.querySelectorAll(".formula-search-item").forEach(el => {
+        el.addEventListener("click", () => {
+            const idx = Number(el.getAttribute("data-idx"));
+            jumpToFormulaFromSearch(formulaSearchResults[idx]);
+        });
+    });
+}
+
+function updateFormulaSearchActive(delta) {
+    if (!formulaSearchResults.length) return;
+    formulaSearchActiveIndex += delta;
+    if (formulaSearchActiveIndex < 0) formulaSearchActiveIndex = formulaSearchResults.length - 1;
+    if (formulaSearchActiveIndex >= formulaSearchResults.length) formulaSearchActiveIndex = 0;
+    document.querySelectorAll(".formula-search-item").forEach((el, idx) => {
+        if (idx === formulaSearchActiveIndex) el.classList.add("active");
+        else el.classList.remove("active");
+    });
+}
+
+function initFormulaSearch() {
+    buildFormulaCatalog();
+    const input = document.getElementById("formula-search-input");
+    input.addEventListener("input", () => {
+        const list = runFormulaSearch(input.value);
+        renderFormulaSearchList(list);
+    });
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            updateFormulaSearchActive(1);
+            return;
+        }
+        if (e.key === "ArrowUp") {
+            e.preventDefault();
+            updateFormulaSearchActive(-1);
+            return;
+        }
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (formulaSearchResults.length) {
+                const idx = formulaSearchActiveIndex >= 0 ? formulaSearchActiveIndex : 0;
+                jumpToFormulaFromSearch(formulaSearchResults[idx]);
+            }
+        }
+    });
+    document.addEventListener("click", (e) => {
+        const wrap = document.querySelector(".formula-search-wrap");
+        if (wrap && !wrap.contains(e.target)) {
+            hideFormulaSearchList();
+        }
+    });
+}
 
 function update3D() {
     if (!physics.isActive) return;
@@ -365,6 +1109,7 @@ function switchView(viewName) {
 
     if (viewName === 'classic') {
         physics.isActive = false;
+        carouselView.classList.add('carousel-hidden'); // 关键：禁用轮盘层的点击拦截
         carouselView.style.opacity = '0';
         setTimeout(() => {
             carouselView.style.display = 'none';
@@ -375,6 +1120,7 @@ function switchView(viewName) {
         btnCarousel.classList.remove('active');
     } else {
         physics.isActive = true;
+        carouselView.classList.remove('carousel-hidden'); // 恢复点击
         update3D();
         classicView.style.opacity = '0';
         setTimeout(() => {
@@ -388,10 +1134,549 @@ function switchView(viewName) {
 }
 
 function loadAnalysis(url) {
+    // 1. 更新 Iframe 内容
     const frame = document.getElementById("analysis-frame");
-    frame.src = url;
+    if (frame.src !== window.location.origin + url) {
+        startIframeLoadBar();
+        frame.src = url;
+    } else {
+        finishIframeLoadBar();
+    }
+    syncFormulaSearchInput(url);
+
+    // 2. 处理左侧列表高亮
+    const items = document.querySelectorAll('.anal-item');
+    items.forEach(item => {
+        // 获取该项绑定的 URL（通过提取 onclick 字符串中的路径）
+        const itemUrlMatch = item.getAttribute('onclick').match(/'([^']+)'/);
+        if (itemUrlMatch && itemUrlMatch[1] === url) {
+            item.classList.add('active');
+            
+            // 自动滚动使高亮项可见 (可选优化)
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+            item.classList.remove('active');
+        }
+    });
+}
+
+function buildSnapshot() {
+    const ctx = getFrameContext();
+    if (!ctx.doc) {
+        throw new Error("当前页面未加载完成");
+    }
+    return {
+        page_url: ctx.url || "/analysis/formula/schmidt",
+        page_title: collectFrameTitle(ctx.doc),
+        params: collectFrameParams(ctx.doc),
+        explanation: collectFrameExplanation(ctx.doc),
+        created_at: new Date().toISOString()
+    };
+}
+
+function saveCurrentRecord() {
+    let snapshot = null;
+    try {
+        snapshot = buildSnapshot();
+        const note = prompt("可选备注（可留空）：", "") || "";
+        snapshot.note = note.trim();
+    } catch (e) {
+        setWorkspaceStatus(`保存失败：${e.message}`, true);
+        return;
+    }
+
+    fetch("/analysis/api/records", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(snapshot)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.ok) throw new Error(data.error || "保存失败");
+        setWorkspaceStatus(`已保存记录 #${data.record.id}（${data.record.page_title || data.record.page_url}）`);
+    })
+    .catch(err => {
+        setWorkspaceStatus(`保存失败：${err.message}`, true);
+    });
+}
+
+function exportCurrentSnapshotJson() {
+    try {
+        const snapshot = buildSnapshot();
+        const name = `experiment-snapshot-${makeTimestamp()}.json`;
+        downloadBlob(JSON.stringify(snapshot, null, 2), name, "application/json;charset=utf-8");
+        setWorkspaceStatus("已导出当前实验 JSON。");
+    } catch (e) {
+        setWorkspaceStatus(`导出JSON失败：${e.message}`, true);
+    }
+}
+
+function exportCurrentFigurePng() {
+    const {doc, win} = getFrameContext();
+    if (!doc || !win) {
+        setWorkspaceStatus("导出PNG失败：当前页面未加载完成。", true);
+        return;
+    }
+
+    const plotDiv = doc.querySelector(".js-plotly-plot");
+    if (plotDiv && win.Plotly && typeof win.Plotly.toImage === "function") {
+        const w = Math.max(900, plotDiv.clientWidth || 900);
+        const h = Math.max(500, plotDiv.clientHeight || 500);
+        win.Plotly.toImage(plotDiv, {
+            format: "png",
+            width: w * 2,
+            height: h * 2
+        }).then(dataUrl => {
+            fetch(dataUrl)
+                .then(r => r.blob())
+                .then(blob => downloadBlob(blob, `experiment-plot-${makeTimestamp()}.png`, "image/png"));
+            setWorkspaceStatus("已导出当前 Plotly 图像 PNG。");
+        }).catch(err => {
+            setWorkspaceStatus(`导出PNG失败：${err.message}`, true);
+        });
+        return;
+    }
+
+    const canvas = doc.querySelector('canvas[id$="-canvas"], canvas');
+    if (canvas && typeof canvas.toDataURL === "function") {
+        try {
+            const dataUrl = canvas.toDataURL("image/png");
+            fetch(dataUrl)
+                .then(r => r.blob())
+                .then(blob => downloadBlob(blob, `experiment-canvas-${makeTimestamp()}.png`, "image/png"));
+            setWorkspaceStatus("已导出当前 Canvas 图像 PNG。");
+        } catch (e) {
+            setWorkspaceStatus(`导出PNG失败：${e.message}`, true);
+        }
+        return;
+    }
+
+    setWorkspaceStatus("导出PNG失败：当前页面未找到可导出的图（Plotly/Canvas）。", true);
+}
+
+function exportRecordCsv() {
+    window.open("/analysis/api/records/export.csv?limit=2000", "_blank");
+    setWorkspaceStatus("正在导出实验记录 CSV...");
+}
+
+let currentReportPayload = null;
+
+function closeReportModal() {
+    const modal = document.getElementById("report-modal");
+    if (modal) modal.classList.remove("show");
+}
+
+function openReportModal() {
+    const modal = document.getElementById("report-modal");
+    if (modal) modal.classList.add("show");
+}
+
+function toNumericEntries(params) {
+    if (!params || typeof params !== "object") return [];
+    return Object.entries(params)
+        .map(([k, v]) => [k, Number(v)])
+        .filter(([, v]) => Number.isFinite(v));
+}
+
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 8) {
+    const src = String(text || "").replace(/\s+/g, " ").trim();
+    if (!src) return y;
+    const words = src.split(" ");
+    let line = "";
+    let lineCount = 0;
+    for (let i = 0; i < words.length; i++) {
+        const test = line ? `${line} ${words[i]}` : words[i];
+        if (ctx.measureText(test).width > maxWidth && line) {
+            ctx.fillText(line, x, y);
+            y += lineHeight;
+            line = words[i];
+            lineCount += 1;
+            if (lineCount >= maxLines - 1) break;
+        } else {
+            line = test;
+        }
+    }
+    if (lineCount < maxLines) {
+        ctx.fillText(line, x, y);
+        y += lineHeight;
+    }
+    return y;
+}
+
+function drawReportCard(payload) {
+    const canvas = document.getElementById("report-card-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, "#120d2d");
+    grad.addColorStop(0.55, "#0e1028");
+    grad.addColorStop(1, "#0a0a1a");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.strokeStyle = "rgba(140, 124, 255, 0.45)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(18, 18, w - 36, h - 36);
+
+    ctx.fillStyle = "#efeaff";
+    ctx.font = "700 40px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+    ctx.fillText("量子实验报告卡", 44, 76);
+
+    ctx.font = "500 20px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+    ctx.fillStyle = "#c7c0ee";
+    ctx.fillText(`页面：${payload.page_title || payload.page_url || '未命名页面'}`, 44, 114);
+
+    ctx.font = "500 16px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+    ctx.fillStyle = "#b5d9ff";
+    ctx.fillText(`时间：${payload.created_at || ''}`, 44, 144);
+    ctx.fillText(`URL：${payload.page_url || ''}`, 44, 170);
+
+    const leftX = 44;
+    const leftW = 700;
+    const rightX = 780;
+    const rightW = 370;
+
+    ctx.fillStyle = "rgba(123,108,246,0.15)";
+    ctx.fillRect(leftX, 190, leftW, 250);
+    ctx.fillRect(leftX, 456, leftW, 250);
+    ctx.fillRect(rightX, 190, rightW, 516);
+
+    ctx.fillStyle = "#ffd8f1";
+    ctx.font = "700 22px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+    ctx.fillText("结论摘要", leftX + 16, 226);
+    ctx.fillText("当前解释", leftX + 16, 492);
+    ctx.fillText("参数概览", rightX + 16, 226);
+
+    const explanation = String(payload.explanation || "");
+    const summary = explanation ? explanation.split(/[。.!?]/)[0].slice(0, 120) : "暂无解释";
+
+    ctx.font = "500 18px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+    ctx.fillStyle = "#f1eeff";
+    wrapCanvasText(ctx, summary, leftX + 16, 260, leftW - 32, 28, 6);
+
+    ctx.fillStyle = "#dbd4ff";
+    ctx.font = "500 16px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+    wrapCanvasText(ctx, explanation || "暂无解释", leftX + 16, 526, leftW - 32, 24, 7);
+
+    const entries = toNumericEntries(payload.params).slice(0, 8);
+    const showEntries = entries.length ? entries : [["(无数值参数)", 0]];
+    const absMax = Math.max(1, ...showEntries.map(([, v]) => Math.abs(v)));
+
+    ctx.font = "500 14px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+    showEntries.forEach(([k, v], i) => {
+        const y = 264 + i * 56;
+        ctx.fillStyle = "#ddd8ff";
+        ctx.fillText(`${k}: ${Number(v).toFixed(4)}`, rightX + 16, y);
+
+        const barY = y + 12;
+        const barW = rightW - 36;
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+        ctx.fillRect(rightX + 16, barY, barW, 12);
+
+        const ratio = Math.max(0, Math.min(1, Math.abs(Number(v)) / absMax));
+        const fill = ctx.createLinearGradient(rightX + 16, barY, rightX + 16 + barW, barY);
+        fill.addColorStop(0, "#7b6cf6");
+        fill.addColorStop(1, "#ff78b4");
+        ctx.fillStyle = fill;
+        ctx.fillRect(rightX + 16, barY, Math.max(2, barW * ratio), 12);
+    });
+
+    if (payload.note) {
+        ctx.fillStyle = "#ffe3a9";
+        ctx.font = "500 15px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+        ctx.fillText(`备注：${payload.note}`, 44, h - 40);
+    }
+
+    ctx.fillStyle = "rgba(220,210,255,0.7)";
+    ctx.font = "500 13px 'Segoe UI', 'Microsoft YaHei', sans-serif";
+    ctx.fillText("Quantum Platform · Auto Report Card", w - 320, h - 22);
+}
+
+function buildReportPayloadFromRecord(rec) {
+    return {
+        id: rec.id,
+        page_url: rec.page_url || "",
+        page_title: rec.page_title || "",
+        params: rec.params || {},
+        explanation: rec.explanation || "",
+        note: rec.note || "",
+        created_at: rec.created_at || "",
+    };
+}
+
+function openReportCardByRecordId(recordId) {
+    const rec = recordCache.find(x => x.id === recordId);
+    if (!rec) {
+        setWorkspaceStatus("生成报告卡失败：记录不存在。", true);
+        return;
+    }
+    currentReportPayload = buildReportPayloadFromRecord(rec);
+    drawReportCard(currentReportPayload);
+    openReportModal();
+    setWorkspaceStatus(`已生成记录 #${recordId} 报告卡。`);
+}
+
+function openCurrentReportCard() {
+    try {
+        const s = buildSnapshot();
+        currentReportPayload = {
+            id: "current",
+            page_url: s.page_url || "",
+            page_title: s.page_title || "当前页面",
+            params: s.params || {},
+            explanation: s.explanation || "",
+            note: "当前临时快照",
+            created_at: new Date().toLocaleString(),
+        };
+        drawReportCard(currentReportPayload);
+        openReportModal();
+        setWorkspaceStatus("已生成当前页面报告卡。", false);
+    } catch (e) {
+        setWorkspaceStatus(`生成报告卡失败：${e.message}`, true);
+    }
+}
+
+function exportReportCardPng() {
+    const canvas = document.getElementById("report-card-canvas");
+    if (!canvas) {
+        setWorkspaceStatus("导出报告卡失败：找不到画布。", true);
+        return;
+    }
+    canvas.toBlob((blob) => {
+        if (!blob) {
+            setWorkspaceStatus("导出报告卡失败：PNG 生成失败。", true);
+            return;
+        }
+        downloadBlob(blob, `report-card-${makeTimestamp()}.png`, "image/png");
+        setWorkspaceStatus("已导出报告卡 PNG。", false);
+    }, "image/png");
+}
+
+function exportReportCardPdf() {
+    const canvas = document.getElementById("report-card-canvas");
+    if (!canvas) {
+        setWorkspaceStatus("导出报告卡失败：找不到画布。", true);
+        return;
+    }
+    const url = canvas.toDataURL("image/png");
+    const w = window.open("", "_blank", "width=1280,height=900");
+    if (!w) {
+        setWorkspaceStatus("导出PDF失败：浏览器阻止了弹窗。", true);
+        return;
+    }
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Report Card</title><style>body{margin:0;background:#111;display:flex;align-items:center;justify-content:center;}img{max-width:100vw;max-height:100vh;}@page{size:A4 landscape;margin:8mm;}</style></head><body><img src="${url}" /></body></html>`);
+    w.document.close();
+    w.focus();
+    setTimeout(() => { w.print(); }, 300);
+    setWorkspaceStatus("已打开打印窗口，可另存为 PDF。", false);
+}
+
+function closeRecordModal() {
+    document.getElementById("record-modal").classList.remove("show");
+}
+
+function openRecordModal() {
+    document.getElementById("record-modal").classList.add("show");
+    refreshRecordList();
+}
+
+function exportOneRecordJson(recordId) {
+    const rec = recordCache.find(x => x.id === recordId);
+    if (!rec) return;
+    downloadBlob(JSON.stringify(rec, null, 2), `record-${recordId}.json`, "application/json;charset=utf-8");
+}
+
+function deleteOneRecord(recordId) {
+    if (!confirm(`确认删除记录 #${recordId} 吗？`)) return;
+    fetch(`/analysis/api/records/${recordId}`, {method: "DELETE"})
+        .then(res => res.json().then(d => ({status: res.status, data: d})))
+        .then(({status, data}) => {
+            if (status >= 400 || !data.ok) throw new Error(data.error || "删除失败");
+            setWorkspaceStatus(`已删除记录 #${recordId}。`);
+            refreshRecordList();
+        })
+        .catch(err => {
+            setWorkspaceStatus(`删除失败：${err.message}`, true);
+        });
+}
+
+function clearAllRecords() {
+    if (!confirm("确认清空全部实验记录吗？此操作不可撤销。")) return;
+    fetch("/analysis/api/records/clear", {method: "POST"})
+        .then(res => res.json().then(d => ({status: res.status, data: d})))
+        .then(({status, data}) => {
+            if (status >= 400 || !data.ok) throw new Error(data.error || "清空失败");
+            setWorkspaceStatus(`已清空记录，共删除 ${data.deleted_count} 条。`);
+            refreshRecordList();
+        })
+        .catch(err => {
+            setWorkspaceStatus(`清空失败：${err.message}`, true);
+        });
+}
+
+function saveRecordNote(recordId) {
+    const input = document.getElementById(`note-input-${recordId}`);
+    if (!input) return;
+    const note = String(input.value || "").trim();
+    fetch(`/analysis/api/records/${recordId}/note`, {
+        method: "PATCH",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({note})
+    })
+    .then(res => res.json().then(d => ({status: res.status, data: d})))
+    .then(({status, data}) => {
+        if (status >= 400 || !data.ok) throw new Error(data.error || "备注保存失败");
+        const idx = recordCache.findIndex(x => x.id === recordId);
+        if (idx >= 0) recordCache[idx] = data.record;
+        setWorkspaceStatus(`记录 #${recordId} 备注已保存。`);
+    })
+    .catch(err => {
+        setWorkspaceStatus(`备注保存失败：${err.message}`, true);
+    });
+}
+
+function restoreRecord(recordId) {
+    const rec = recordCache.find(x => x.id === recordId);
+    if (!rec) {
+        setWorkspaceStatus("恢复失败：记录不存在。", true);
+        return;
+    }
+    const params = rec.params || {};
+    const ctx = getFrameContext();
+    if (ctx.doc && ctx.url === rec.page_url) {
+        applyParamsToFrame(ctx.doc, params);
+        setWorkspaceStatus(`已恢复记录 #${rec.id} 参数。`);
+    } else {
+        pendingRestoreParams = params;
+        loadAnalysis(rec.page_url);
+        setWorkspaceStatus(`正在恢复记录 #${rec.id}...`);
+    }
+    closeRecordModal();
+    switchView("classic");
+}
+
+function renderRecordTable(records) {
+    const wrap = document.getElementById("record-list-wrap");
+    if (!records.length) {
+        wrap.innerHTML = "<div style='padding:10px 0; color:#aab1d8;'>暂无记录。</div>";
+        return;
+    }
+
+    const rows = records.map(r => `
+        <tr>
+            <td>${r.id}</td>
+            <td>${r.created_at || ""}</td>
+            <td>${escHtml(r.page_title || "")}</td>
+            <td>${escHtml(r.page_url || "")}</td>
+            <td>${escHtml((r.explanation || "").slice(0, 80))}</td>
+            <td>
+                <div class="record-actions">
+                    <input id="note-input-${r.id}" value="${escAttr(r.note || "")}" placeholder="备注..." style="width:170px; margin-top:0;">
+                    <button type="button" onclick="saveRecordNote(${r.id})">保存备注</button>
+                </div>
+            </td>
+            <td>
+                <div class="record-actions">
+                    <button type="button" onclick="restoreRecord(${r.id})">恢复</button>
+                    <button type="button" onclick="exportOneRecordJson(${r.id})">导出JSON</button>
+                    <button type="button" onclick="openReportCardByRecordId(${r.id})">报告卡</button>
+                    <button type="button" onclick="deleteOneRecord(${r.id})">删除</button>
+                </div>
+            </td>
+        </tr>
+    `).join("");
+
+    wrap.innerHTML = `
+        <table class="record-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>时间</th>
+                    <th>页面</th>
+                    <th>URL</th>
+                    <th>当前解释</th>
+                    <th>备注</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+    `;
+}
+
+function clearRecordSearch() {
+    const input = document.getElementById("record-search-input");
+    if (input) input.value = "";
+    refreshRecordList();
+}
+
+function refreshRecordList() {
+    const q = (document.getElementById("record-search-input")?.value || "").trim();
+    const url = `/analysis/api/records?limit=200&q=${encodeURIComponent(q)}`;
+    fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.ok) throw new Error(data.error || "加载失败");
+            recordCache = data.records || [];
+            renderRecordTable(recordCache);
+        })
+        .catch(err => {
+            document.getElementById("record-list-wrap").innerHTML = `<div style="color:#ff9ea6;">加载失败：${err.message}</div>`;
+        });
 }
 
 update3D();
+initFormulaSearch();
+refreshFxToggleButton();
+refreshCinematicToggleButton();
+// 解决 iframe 内滚动条消失的问题
+document.getElementById('analysis-frame').onload = function() {
+    try {
+        const frameDoc = this.contentDocument || this.contentWindow.document;
+        const currentPath = this.src ? new URL(this.src).pathname : "";
+        if (currentPath) syncFormulaSearchInput(currentPath);
+        finishIframeLoadBar();
+        syncIframeFxState();
+        // 强制 body 显示纵向滚动条，高度自动
+        frameDoc.body.style.overflowY = 'auto';
+        frameDoc.body.style.height = 'auto';
+        frameDoc.documentElement.style.overflowY = 'auto';
+        if (pendingRestoreParams) {
+            applyParamsToFrame(frameDoc, pendingRestoreParams);
+            pendingRestoreParams = null;
+            setWorkspaceStatus("已恢复记录参数。");
+        }
+    } catch (e) {
+        // 如果跨域可能会报错，但在同一系统内通常没问题
+        console.warn("无法操作 Iframe 样式，可能是跨域限制");
+    }
+};
+// 初始化默认高亮
+loadAnalysis('/analysis/formula/schmidt');
+document.getElementById("record-modal").addEventListener("click", (e) => {
+    if (e.target.id === "record-modal") closeRecordModal();
+});
+
+document.getElementById("report-modal").addEventListener("click", (e) => {
+    if (e.target.id === "report-modal") closeReportModal();
+});
+
 </script>
 {% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+

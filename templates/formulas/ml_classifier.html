@@ -1,0 +1,433 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}ML Entanglement Classifier{% endblock %}
+
+{% block content %}
+<style>
+  .ml-panel {
+    border: 1px solid rgba(123, 108, 246, 0.35);
+    border-radius: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(18, 15, 39, 0.92), rgba(10, 9, 24, 0.92));
+    box-shadow: inset 0 0 26px rgba(123, 108, 246, 0.12), 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .ml-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .ml-controls input {
+    width: 120px;
+    margin-top: 0;
+  }
+
+  .metric-grid {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .metric-card {
+    border: 1px solid rgba(123, 108, 246, 0.3);
+    border-radius: 10px;
+    padding: 12px;
+    background: rgba(8, 7, 20, 0.82);
+  }
+
+  .metric-title {
+    font-weight: bold;
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .metric-line {
+    font-size: 13px;
+    color: #d7dbff;
+    line-height: 1.8;
+  }
+
+  .plot-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .plot-box {
+    min-height: 340px;
+    border: 1px solid rgba(255, 120, 180, 0.25);
+    border-radius: 10px;
+    background: rgba(8, 7, 20, 0.82);
+  }
+
+  .meta-box {
+    margin-top: 12px;
+    border: 1px dashed rgba(123, 108, 246, 0.35);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #d7dbff;
+  }
+
+  @media (max-width: 960px) {
+    .metric-grid, .plot-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>Lightweight ML Classifier for Entanglement Detection</h3>
+    $$\text{Label} = 1 \iff (\lambda_{\min}^{PPT} < 0) \lor (C(\rho) > 0)$$
+  </div>
+  <div class="formula-bound">
+    <span>Models: Logistic Regression + SVM (RBF)</span>
+  </div>
+</div>
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+  <details open>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">这个模块在回答什么</summary>
+    <p style="color:#d7dbff; line-height:1.75;">
+      给定一批由参数生成的量子态特征，模型学习“可分/纠缠”标签，并比较不同分类器效果。
+    </p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">LogReg 与 SVM 的区别</summary>
+    <p style="color:#d7dbff; line-height:1.75;">
+      LogReg 更容易解释（能看系数方向与大小）；SVM-RBF 对非线性边界更灵活，通常精度更高一些。
+    </p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看输出图</summary>
+    <p style="color:#d7dbff; line-height:1.75;">
+      先看混淆矩阵（错分在哪类）；再看 AUC/Recall/F1；最后看决策边界图，理解模型在特征平面如何分割样本。
+    </p>
+  </details>
+</div>
+
+<div class="card analysis-panel ml-panel">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <h2 style="margin:0;">ML Benchmark Console</h2>
+    <div class="ml-controls">
+      <label for="n-samples" style="margin:0;">samples</label>
+      <input id="n-samples" type="number" min="200" max="20000" step="100" value="1200">
+      <label for="seed" style="margin:0;">seed</label>
+      <input id="seed" type="number" min="0" max="100000" step="1" value="42">
+      <button id="train-btn" style="margin-top:0;">Train & Evaluate</button>
+    </div>
+  </div>
+
+  <p id="train-status" style="margin-top:10px; color:#aab1d8;">Ready.</p>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-title">Logistic Regression</div>
+      <div class="metric-line" id="m-logreg">No result yet.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">SVM (RBF)</div>
+      <div class="metric-line" id="m-svm">No result yet.</div>
+    </div>
+  </div>
+
+  <div class="plot-grid">
+    <div id="cm-logreg" class="plot-box"></div>
+    <div id="cm-svm" class="plot-box"></div>
+  </div>
+
+  <div id="metric-compare" class="plot-box" style="margin-top:12px; min-height:320px;"></div>
+  <div class="plot-grid">
+    <div id="roc-plot" class="plot-box"></div>
+    <div id="feat-importance" class="plot-box"></div>
+  </div>
+  <div class="plot-grid">
+    <div id="decision-logreg" class="plot-box"></div>
+    <div id="decision-svm" class="plot-box"></div>
+  </div>
+  <div class="plot-grid">
+    <div id="class-donut" class="plot-box"></div>
+    <div id="source-donut" class="plot-box"></div>
+  </div>
+
+  <div id="meta-box" class="meta-box">Dataset meta will appear here.</div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+<script>
+function fmt(n) { return Number(n).toFixed(4); }
+
+function renderConfusion(divId, cm, title) {
+  const trace = {
+    z: cm,
+    x: ["Pred Sep", "Pred Ent"],
+    y: ["True Sep", "True Ent"],
+    type: "heatmap",
+    colorscale: "Viridis",
+    hovertemplate: "%{y}<br>%{x}<br>count=%{z}<extra></extra>"
+  };
+  const layout = {
+    title,
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: {color: "#dde2ff"},
+    margin: {l: 70, r: 20, t: 45, b: 55}
+  };
+  Plotly.newPlot(divId, [trace], layout, {displayModeBar: false, responsive: true});
+}
+
+function renderMetricCompare(logreg, svm) {
+  const metrics = ["accuracy", "precision", "recall", "f1"];
+  const y1 = metrics.map(k => logreg[k]);
+  const y2 = metrics.map(k => svm[k]);
+  const t1 = {x: metrics, y: y1, type: "bar", name: "LogReg", marker: {color: "#7ad1ff"}};
+  const t2 = {x: metrics, y: y2, type: "bar", name: "SVM-RBF", marker: {color: "#ff78b4"}};
+  const layout = {
+    title: "Metric Comparison",
+    barmode: "group",
+    yaxis: {range: [0, 1], title: "score"},
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: {color: "#dde2ff"},
+    margin: {l: 50, r: 20, t: 45, b: 45}
+  };
+  Plotly.newPlot("metric-compare", [t1, t2], layout, {displayModeBar: false, responsive: true});
+}
+
+function renderMetricsText(id, m) {
+  document.getElementById(id).innerHTML = [
+    `Accuracy: <b>${fmt(m.accuracy)}</b>`,
+    `Precision: <b>${fmt(m.precision)}</b>`,
+    `Recall: <b>${fmt(m.recall)}</b>`,
+    `F1: <b>${fmt(m.f1)}</b>`,
+    `AUC: <b>${fmt(m.roc.auc)}</b>`
+  ].join("<br>");
+}
+
+function renderRoc(logreg, svm) {
+  const t1 = {
+    x: logreg.roc.fpr,
+    y: logreg.roc.tpr,
+    mode: "lines",
+    name: `LogReg (AUC=${fmt(logreg.roc.auc)})`,
+    line: {color: "#7ad1ff", width: 2}
+  };
+  const t2 = {
+    x: svm.roc.fpr,
+    y: svm.roc.tpr,
+    mode: "lines",
+    name: `SVM-RBF (AUC=${fmt(svm.roc.auc)})`,
+    line: {color: "#ff78b4", width: 2}
+  };
+  const t3 = {
+    x: [0, 1],
+    y: [0, 1],
+    mode: "lines",
+    name: "random",
+    line: {color: "#999", width: 1, dash: "dash"}
+  };
+  const layout = {
+    title: "ROC Curve",
+    xaxis: {title: "FPR", range: [0, 1]},
+    yaxis: {title: "TPR", range: [0, 1]},
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: {color: "#dde2ff"},
+    margin: {l: 50, r: 20, t: 45, b: 45}
+  };
+  Plotly.newPlot("roc-plot", [t1, t2, t3], layout, {displayModeBar: false, responsive: true});
+}
+
+function renderFeatureImportance(items) {
+  const labels = items.map(x => x.feature);
+  const vals = items.map(x => x.abs_coef);
+  const signs = items.map(x => x.coef);
+  const trace = {
+    x: vals,
+    y: labels,
+    type: "bar",
+    orientation: "h",
+    marker: {
+      color: signs,
+      colorscale: "RdBu",
+      reversescale: true,
+      colorbar: {title: "coef sign"}
+    },
+    hovertemplate: "feature=%{y}<br>|coef|=%{x:.4f}<extra></extra>"
+  };
+  const layout = {
+    title: "LogReg Feature Importance (|coef|)",
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: {color: "#dde2ff"},
+    margin: {l: 150, r: 20, t: 45, b: 45}
+  };
+  Plotly.newPlot("feat-importance", [trace], layout, {displayModeBar: false, responsive: true});
+}
+
+function renderDecisionMap(divId, title, proj, zKey) {
+  const sepX = [];
+  const sepY = [];
+  const entX = [];
+  const entY = [];
+  for (let i = 0; i < proj.points.label.length; i++) {
+    if (proj.points.label[i] === 1) {
+      entX.push(proj.points.x[i]);
+      entY.push(proj.points.y[i]);
+    } else {
+      sepX.push(proj.points.x[i]);
+      sepY.push(proj.points.y[i]);
+    }
+  }
+
+  const bg = {
+    x: proj.x_grid,
+    y: proj.y_grid,
+    z: proj[zKey],
+    type: "heatmap",
+    colorscale: "RdBu",
+    reversescale: true,
+    opacity: 0.82,
+    showscale: true,
+    colorbar: {title: "P(ent)"},
+    hovertemplate: `${proj.x_feature}=%{x:.4f}<br>${proj.y_feature}=%{y:.4f}<br>P(ent)=%{z:.3f}<extra></extra>`
+  };
+
+  const sep = {
+    x: sepX,
+    y: sepY,
+    mode: "markers",
+    type: "scattergl",
+    name: "Separable",
+    marker: {size: 5, color: "#6ee7ff", line: {width: 0}}
+  };
+
+  const ent = {
+    x: entX,
+    y: entY,
+    mode: "markers",
+    type: "scattergl",
+    name: "Entangled",
+    marker: {size: 5, color: "#ff86c8", line: {width: 0}}
+  };
+
+  const boundary = {
+    x: proj.x_grid,
+    y: proj.y_grid,
+    z: proj[zKey],
+    type: "contour",
+    contours: {
+      start: 0.5,
+      end: 0.5,
+      size: 0.5,
+      coloring: "none",
+      showlabels: false
+    },
+    line: {color: "#fff", width: 2},
+    showscale: false,
+    hoverinfo: "skip"
+  };
+
+  const layout = {
+    title,
+    xaxis: {title: proj.x_feature},
+    yaxis: {title: proj.y_feature},
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: {color: "#dde2ff"},
+    legend: {orientation: "h", y: 1.12},
+    margin: {l: 60, r: 20, t: 45, b: 50}
+  };
+  Plotly.newPlot(divId, [bg, boundary, sep, ent], layout, {displayModeBar: false, responsive: true});
+}
+
+function renderMetaDonuts(meta) {
+  const classTrace = {
+    labels: ["Entangled", "Separable"],
+    values: [meta.entangled_ratio, meta.separable_ratio],
+    type: "pie",
+    hole: 0.58,
+    marker: {colors: ["#ff78b4", "#6ee7ff"]},
+    textinfo: "label+percent"
+  };
+  const classLayout = {
+    title: "Class Balance",
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: {color: "#dde2ff"},
+    margin: {l: 20, r: 20, t: 45, b: 20}
+  };
+  Plotly.newPlot("class-donut", [classTrace], classLayout, {displayModeBar: false, responsive: true});
+
+  const src = meta.dataset_sources || {};
+  const sourceTrace = {
+    labels: ["Werner", "Generalized Werner", "Random Density"],
+    values: [
+      src.n_werner || 0,
+      src.n_generalized_werner || 0,
+      src.n_random_density || 0
+    ],
+    type: "pie",
+    hole: 0.58,
+    marker: {colors: ["#7ad1ff", "#9d7dff", "#ffb86b"]},
+    textinfo: "label+percent"
+  };
+  const sourceLayout = {
+    title: "Dataset Source Composition",
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: {color: "#dde2ff"},
+    margin: {l: 20, r: 20, t: 45, b: 20}
+  };
+  Plotly.newPlot("source-donut", [sourceTrace], sourceLayout, {displayModeBar: false, responsive: true});
+}
+
+function runTrain() {
+  const btn = document.getElementById("train-btn");
+  const status = document.getElementById("train-status");
+  const n = Number(document.getElementById("n-samples").value || 1200);
+  const seed = Number(document.getElementById("seed").value || 42);
+
+  btn.disabled = true;
+  status.textContent = "Training in progress...";
+
+  fetch(`/analysis/api/ml/train?n_samples=${n}&seed=${seed}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) throw new Error(data.error);
+
+      renderMetricsText("m-logreg", data.logreg);
+      renderMetricsText("m-svm", data.svm_rbf);
+      renderConfusion("cm-logreg", data.logreg.confusion_matrix, "LogReg Confusion Matrix");
+      renderConfusion("cm-svm", data.svm_rbf.confusion_matrix, "SVM Confusion Matrix");
+      renderMetricCompare(data.logreg, data.svm_rbf);
+      renderRoc(data.logreg, data.svm_rbf);
+      renderFeatureImportance(data.feature_importance);
+      renderDecisionMap("decision-logreg", "Decision Map: Logistic Regression", data.decision_projection, "logreg_prob");
+      renderDecisionMap("decision-svm", "Decision Map: SVM-RBF", data.decision_projection, "svm_prob");
+      renderMetaDonuts(data.meta);
+
+      const meta = data.meta;
+      document.getElementById("meta-box").innerHTML = [
+        `Samples: <b>${meta.n_samples}</b> (train=${meta.n_train}, test=${meta.n_test})`,
+        `Class ratio: entangled=<b>${fmt(meta.entangled_ratio)}</b>, separable=<b>${fmt(meta.separable_ratio)}</b>`,
+        `Label rule: <code>${meta.label_rule}</code>`,
+        `Features: <code>${meta.feature_names.join(", ")}</code>`
+      ].join("<br>");
+
+      status.textContent = "Training finished.";
+    })
+    .catch(err => {
+      status.textContent = `Failed: ${err.message}`;
+    })
+    .finally(() => {
+      btn.disabled = false;
+    });
+}
+
+document.getElementById("train-btn").addEventListener("click", runTrain);
+</script>
+{% endblock %}

@@ -63,14 +63,78 @@
         </div>
     </section>
 </div>
-
+<nav class="home-guide-rail" id="home-guide-rail" aria-label="首页板块导引">
+    <button class="home-guide-tab" type="button" aria-expanded="false" aria-label="展开首页导引栏">
+        <span class="home-guide-arrow">&#9664;</span>
+    </button>
+    <div class="home-guide-panel">
+        <div class="home-guide-title">页面导引</div>
+        <button class="home-guide-item active" type="button" data-index="0">01 封面</button>
+        <button class="home-guide-item" type="button" data-index="1">02 定位</button>
+        <button class="home-guide-item" type="button" data-index="2">03 功能</button>
+        <button class="home-guide-item" type="button" data-index="3">04 展望</button>
+    </div>
+</nav>
 <script>
     /* --- 1. 渐变翻页逻辑 (先快后慢) --- */
     let currentSection = 0;
     const scroller = document.getElementById('main-scroller');
     const sections = document.querySelectorAll('.page-section');
     const totalSections = sections.length;
+    const guideRail = document.getElementById('home-guide-rail');
+    const guideTab = guideRail ? guideRail.querySelector('.home-guide-tab') : null;
+    const guideItems = Array.from(document.querySelectorAll('.home-guide-item'));
     let isScrolling = false;
+
+    function setGuideOpen(open) {
+        if (!guideRail || !guideTab) return;
+        const on = !!open;
+        guideRail.classList.toggle('is-open', on);
+        guideTab.setAttribute('aria-expanded', on ? 'true' : 'false');
+    }
+
+    if (guideTab && guideRail) {
+        guideTab.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const next = !guideRail.classList.contains('is-open');
+            setGuideOpen(next);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!guideRail.contains(e.target)) {
+                setGuideOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') setGuideOpen(false);
+        });
+    }
+
+    function syncGuideActive() {
+        guideItems.forEach((item, idx) => {
+            if (idx === currentSection) item.classList.add('active');
+            else item.classList.remove('active');
+        });
+    }
+
+    function goToSection(index) {
+        if (isScrolling) return;
+        const next = Number(index);
+        if (!Number.isFinite(next)) return;
+        if (next < 0 || next >= totalSections) return;
+        if (next === currentSection) return;
+        currentSection = next;
+        performScroll();
+    }
+
+    guideItems.forEach(btn => {
+        btn.addEventListener('click', () => {
+            goToSection(btn.dataset.index);
+            setGuideOpen(false);
+        });
+    });
 
     // 监听滚轮事件
     window.addEventListener('wheel', (e) => {
@@ -87,67 +151,201 @@
 
     function performScroll() {
         isScrolling = true;
-        // 使用 CSS transform 实现平滑移动
+        // ä½¿ç”¨ CSS transform å®žçŽ°å¹³æ»‘ç§»åŠ¨
         sections.forEach(sec => {
             sec.style.transform = `translateY(-${currentSection * 100}%)`;
         });
+        syncGuideActive();
         
-        // 锁定时间与 CSS transition 一致 (1.2s)
+        // é”å®šæ—¶é—´ä¸Ž CSS transition ä¸€è‡´ (1.2s)
         setTimeout(() => { isScrolling = false; }, 1200);
     }
 
-    /* --- 2. 增强型背景点线脚本 --- */
+    syncGuideActive();
+
+    /* --- 2. 首页背景粒子（高密度 + 鼠标扰动） --- */
     const canvas = document.getElementById("bg-canvas-index");
     const ctx = canvas.getContext("2d");
+    const spawnMargin = 70;
+    const maxDist = 165;
+    const maxSpeed = 2.05;
+    const densityDivisor = 7600;
+    const minCount = 130;
+    const maxCount = 260;
     let particles = [];
-    
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+
+    const mouse = {
+        x: null,
+        y: null,
+        px: null,
+        py: null,
+        vx: 0,
+        vy: 0,
+        active: false,
+        radius: 210,
+        force: 0.24,
+        lastMoveAt: 0
+    };
+    const mouseActiveWindowMs = 280;
+
+    function clamp(v, lo, hi) {
+        return Math.max(lo, Math.min(hi, v));
     }
-    window.addEventListener("resize", resize);
-    resize();
+
+    function calcCount() {
+        const byArea = Math.round((canvas.width * canvas.height) / densityDivisor);
+        return clamp(byArea, minCount, maxCount);
+    }
+
+    function isMouseHot(nowTs) {
+        if (!mouse.active || mouse.x === null || mouse.y === null) return false;
+        return nowTs - mouse.lastMoveAt <= mouseActiveWindowMs;
+    }
 
     class P {
         constructor() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.vx = (Math.random() - 0.5) * 0.4;
-            this.vy = (Math.random() - 0.5) * 0.4;
+            this.x = -spawnMargin + Math.random() * (canvas.width + spawnMargin * 2);
+            this.y = -spawnMargin + Math.random() * (canvas.height + spawnMargin * 2);
+            this.baseVx = (Math.random() - 0.5) * 0.48;
+            this.baseVy = (Math.random() - 0.5) * 0.48;
+            this.vx = this.baseVx;
+            this.vy = this.baseVy;
+            this.r = Math.random() * 2 + 0.7;
         }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        update(mouseHot) {
+            if (mouseHot && mouse.x !== null && mouse.y !== null) {
+                const dx = this.x - mouse.x;
+                const dy = this.y - mouse.y;
+                const d = Math.hypot(dx, dy);
+                if (d < mouse.radius && d > 0.001) {
+                    const n = 1 - d / mouse.radius;
+                    const nx = dx / d;
+                    const ny = dy / d;
+                    this.vx += nx * mouse.force * n + (-ny) * 0.04 * n + mouse.vx * 0.016 * n;
+                    this.vy += ny * mouse.force * n + (nx) * 0.04 * n + mouse.vy * 0.016 * n;
+                }
+            }
+
+            this.vx += (this.baseVx - this.vx) * 0.015;
+            this.vy += (this.baseVy - this.vy) * 0.015;
+            this.vx *= 0.992;
+            this.vy *= 0.992;
+            this.vx = clamp(this.vx, -maxSpeed, maxSpeed);
+            this.vy = clamp(this.vy, -maxSpeed, maxSpeed);
+
+            this.x += this.vx;
+            this.y += this.vy;
+
+            if (this.x < -spawnMargin || this.x > canvas.width + spawnMargin) this.vx *= -1;
+            if (this.y < -spawnMargin || this.y > canvas.height + spawnMargin) this.vy *= -1;
         }
         draw() {
-            // 增强粒子亮度
-            ctx.fillStyle = "rgba(123, 108, 246, 0.85)";
+            ctx.fillStyle = "rgba(123, 108, 246, 0.86)";
             ctx.beginPath();
-            ctx.arc(this.x, this.y, 1.8, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
             ctx.fill();
         }
     }
 
-    for(let i=0; i<100; i++) particles.push(new P());
+    function syncCount() {
+        const target = calcCount();
+        if (particles.length < target) {
+            for (let i = particles.length; i < target; i++) particles.push(new P());
+            return;
+        }
+        if (particles.length > target) particles.length = target;
+    }
+
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        syncCount();
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    function updateMouse(x, y) {
+        if (mouse.px === null || mouse.py === null) {
+            mouse.vx = 0;
+            mouse.vy = 0;
+        } else {
+            mouse.vx = (x - mouse.px) * 0.72;
+            mouse.vy = (y - mouse.py) * 0.72;
+        }
+        mouse.px = x;
+        mouse.py = y;
+        mouse.x = x;
+        mouse.y = y;
+        mouse.active = true;
+        mouse.lastMoveAt = performance.now();
+    }
+
+    function clearMouse() {
+        mouse.active = false;
+        mouse.x = mouse.y = null;
+        mouse.px = mouse.py = null;
+        mouse.vx = mouse.vy = 0;
+        mouse.lastMoveAt = 0;
+    }
+
+    window.addEventListener("mousemove", (e) => updateMouse(e.clientX, e.clientY));
+    window.addEventListener("mouseout", clearMouse);
+    window.addEventListener("touchmove", (e) => {
+        const t = e.touches && e.touches[0];
+        if (!t) return;
+        updateMouse(t.clientX, t.clientY);
+    }, { passive: true });
+    window.addEventListener("touchend", clearMouse, { passive: true });
+    window.addEventListener("touchcancel", clearMouse, { passive: true });
+
+    function drawLinks() {
+        for (let i = 0; i < particles.length; i++) {
+            const p1 = particles[i];
+            for (let j = i + 1; j < particles.length; j++) {
+                const p2 = particles[j];
+                const d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                if (d >= maxDist) continue;
+                const a = Math.pow(1 - d / maxDist, 1.25) * 0.48;
+                ctx.strokeStyle = `rgba(123, 108, 246, ${a})`;
+                ctx.lineWidth = 0.82;
+                ctx.beginPath();
+                ctx.moveTo(p1.x, p1.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.stroke();
+            }
+        }
+    }
+
+    function drawMouseLinks(mouseHot) {
+        if (!mouseHot || mouse.x === null || mouse.y === null) return;
+        const dMax = mouse.radius * 1.06;
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            const d = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+            if (d >= dMax) continue;
+            const a = (1 - d / dMax) * 0.28;
+            ctx.strokeStyle = `rgba(182, 160, 255, ${a})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(mouse.x, mouse.y);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+        }
+    }
 
     function draw() {
+        const mouseHot = isMouseHot(performance.now());
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(p => {
-            p.update(); p.draw();
-            particles.forEach(p2 => {
-                let d = Math.hypot(p.x - p2.x, p.y - p2.y);
-                if(d < 150) {
-                    // 增强连线对比度
-                    ctx.strokeStyle = `rgba(123, 108, 246, ${0.35 * (1 - d/150)})`;
-                    ctx.lineWidth = 0.8;
-                    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                }
-            });
-        });
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update(mouseHot);
+            particles[i].draw();
+        }
+        drawLinks();
+        drawMouseLinks(mouseHot);
         requestAnimationFrame(draw);
     }
     draw();
+
 </script>
 
 <style>
@@ -265,6 +463,130 @@
         animation: wheel-move 2s infinite;
     }
     @keyframes wheel-move { 0% { top: 6px; opacity: 1; } 100% { top: 25px; opacity: 0; } }
+
+    /* 5. 右侧导引栏：默认隐藏，仅露箭头，悬停展开 */
+    .home-guide-rail {
+        position: fixed;
+        right: 0;
+        top: 50%;
+        transform: translate(calc(100% - 38px), -50%);
+        z-index: 40;
+        display: flex;
+        align-items: stretch;
+        transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .home-guide-rail:hover,
+    .home-guide-rail:focus-within,
+    .home-guide-rail.is-open {
+        transform: translate(0, -50%);
+    }
+
+    .home-guide-tab {
+        width: 38px;
+        min-width: 38px;
+        border: 1px solid rgba(123, 108, 246, 0.45);
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+        background: linear-gradient(180deg, rgba(41, 28, 78, 0.92), rgba(25, 18, 52, 0.92));
+        color: #d7ccff;
+        cursor: pointer;
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+    }
+
+    .home-guide-arrow {
+        display: inline-block;
+        font-size: 16px;
+        opacity: 0.95;
+        transition: transform 0.24s ease, opacity 0.24s ease;
+        animation: guide-arrow-pulse 1.4s ease-in-out infinite;
+    }
+
+    .home-guide-rail.is-open .home-guide-arrow {
+        animation: none;
+        transform: rotate(180deg);
+        opacity: 1;
+    }
+
+    .home-guide-panel {
+        width: 210px;
+        padding: 10px;
+        border: 1px solid rgba(123, 108, 246, 0.45);
+        border-right: none;
+        border-radius: 10px 0 0 10px;
+        background: linear-gradient(160deg, rgba(20, 14, 40, 0.95), rgba(12, 10, 30, 0.95));
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35), inset 0 0 20px rgba(123, 108, 246, 0.14);
+    }
+
+    .home-guide-title {
+        color: #c6b8ff;
+        font-size: 12px;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+        opacity: 0.9;
+    }
+
+    .home-guide-item {
+        width: 100%;
+        text-align: left;
+        margin-top: 0;
+        margin-bottom: 6px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid rgba(123, 108, 246, 0.28);
+        background: rgba(123, 108, 246, 0.12);
+        color: #d9d4ff;
+        font-size: 13px;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .home-guide-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .home-guide-item:hover {
+        background: rgba(123, 108, 246, 0.22);
+        border-color: rgba(169, 151, 255, 0.45);
+    }
+
+    .home-guide-item.active {
+        background: linear-gradient(120deg, rgba(123, 108, 246, 0.66), rgba(255, 120, 180, 0.4));
+        border-color: rgba(202, 184, 255, 0.72);
+        color: #fff;
+        box-shadow: 0 0 16px rgba(123, 108, 246, 0.35);
+    }
+
+    @keyframes guide-arrow-pulse {
+        0% { transform: translateX(0); opacity: 0.85; }
+        50% { transform: translateX(-2px); opacity: 1; }
+        100% { transform: translateX(0); opacity: 0.85; }
+    }
+
+    @media (max-width: 768px) {
+        .home-guide-panel {
+            width: 176px;
+            padding: 8px;
+        }
+        .home-guide-item {
+            font-size: 12px;
+            padding: 7px 8px;
+        }
+    }
+
 </style>
 
 {% endblock %}
+
+
+
+
+
+
+

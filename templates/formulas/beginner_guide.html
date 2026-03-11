@@ -1,0 +1,111 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}新手导览{% endblock %}
+
+{% block content %}
+<style>
+  .guide-wrap {
+    border: 1px solid rgba(123, 108, 246, 0.35);
+    border-radius: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(18, 15, 39, 0.92), rgba(10, 9, 24, 0.92));
+    box-shadow: inset 0 0 26px rgba(123, 108, 246, 0.12), 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .guide-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .guide-card {
+    border: 1px solid rgba(123, 108, 246, 0.28);
+    border-radius: 10px;
+    padding: 12px;
+    background: rgba(8, 7, 20, 0.82);
+  }
+
+  .guide-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #fff;
+  }
+
+  .guide-card p, .guide-card li {
+    color: #d7dbff;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .guide-card ul {
+    margin: 6px 0 0 0;
+    padding-left: 18px;
+  }
+
+  .route-line {
+    margin-top: 10px;
+    color: #9cb0ff;
+    font-size: 13px;
+    border-top: 1px dashed rgba(123, 108, 246, 0.4);
+    padding-top: 10px;
+  }
+
+  @media (max-width: 960px) {
+    .guide-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>平台新手导览（建议先看）</h3>
+    <p style="margin: 6px 0 0 0;">
+      本页面帮助你快速理解：这些公式在回答什么问题、图该怎么读、操作顺序是什么。
+    </p>
+  </div>
+</div>
+
+<div class="card analysis-panel guide-wrap">
+  <div class="guide-grid">
+    <div class="guide-card">
+      <h4>1. 先搞清三类问题</h4>
+      <ul>
+        <li>是否纠缠：PPT、CCNR、Reduction、Witness</li>
+        <li>纠缠多强：Concurrence、Formation、Geometric</li>
+        <li>态有多混合：Purity、Linear Entropy、Von Neumann 熵</li>
+      </ul>
+    </div>
+    <div class="guide-card">
+      <h4>2. 图像通用读法</h4>
+      <ul>
+        <li>曲线图：先看阈值线，再看曲线是否跨线</li>
+        <li>热图：先看颜色条，再看边界线（通常是 0 或 2）</li>
+        <li>相图：看轨迹落在哪个区域，观察状态随参数如何移动</li>
+      </ul>
+    </div>
+    <div class="guide-card">
+      <h4>3. 推荐操作顺序</h4>
+      <ul>
+        <li>Schmidt 分解（建立直觉）</li>
+        <li>PPT / CCNR / Reduction（会不会纠缠）</li>
+        <li>CHSH Horodecki（是否非定域）</li>
+        <li>Linear Entropy + Concurrence（混合度与纠缠关系）</li>
+      </ul>
+    </div>
+    <div class="guide-card">
+      <h4>4. 常见误解提醒</h4>
+      <ul>
+        <li>“不违背 CHSH” 不等于 “一定可分”</li>
+        <li>“混合度高” 不一定 “纠缠强”</li>
+        <li>单一判据不足，最好结合多个判据一起看</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="route-line">
+    快速入口：
+    <code>/analysis/formula/chsh_horodecki</code>、
+    <code>/analysis/formula/linear_entropy</code>、
+    <code>/analysis/criteria_compare</code>
+  </div>
+</div>
+{% endblock %}

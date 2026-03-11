@@ -8,33 +8,112 @@
   <div class="formula-bound">
     <span>量子相干性描述了状态在给定基组下的叠加性质。对于 Werner 态，随着噪声 $p$ 的减小，非对角线元素逐渐消失，相干性也随之下降。</span>
   </div>
+
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+    <details open>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+      <p style="color:#d7dbff; line-height:1.75;">l1 相干性衡量密度矩阵非对角元总强度，反映量子叠加资源“还剩多少”。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">用途</summary>
+      <p style="color:#d7dbff; line-height:1.75;">相干性是量子资源理论中的基础量，常用于描述噪声导致的退相干过程。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+      <p style="color:#d7dbff; line-height:1.75;">看曲线是否接近 0，以及随 p 的变化趋势。越接近 0 通常表示叠加信息更弱。</p>
+    </details>  </div>
 </div>
 
 <div class="card analysis-panel">
-  <div style="display: flex; justify-content: space-between; align-items: center;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
       <h2>Werner态相干性扫描 (1D Scan)</h2>
-      <button id="load-btn" onclick="loadCoherenceData()" class="btn-primary">▶ 生成曲线</button>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <label for="coh-p" style="margin:0;">p</label>
+        <input id="coh-p" type="range" min="0" max="1" step="0.01" value="0.50" style="width:220px; margin-top:0;">
+        <span id="coh-p-text">0.50</span>
+        <button id="load-btn" onclick="loadCoherenceData()" class="btn-primary">▶ 生成曲线</button>
+      </div>
   </div>
+  <p id="coh-guide" style="margin:8px 0 0 0; color:#aee1ff;">当前解释：等待生成曲线...</p>
+  
   <div id="plot-coherence-1d" style="width: 100%; height: 400px;"></div>
 </div>
 
 <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
 <script>
+let cohData = null;
+
+function nearestIndex(arr, value) {
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    const d = Math.abs(arr[i] - value);
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  }
+  return best;
+}
+
+function renderCoherenceAt(p) {
+  if (!cohData) return;
+  const idx = nearestIndex(cohData.p, p);
+  const x = cohData.p[idx];
+  const y = cohData.coherence[idx];
+  const yMin = Math.min(...cohData.coherence);
+  const yMax = Math.max(...cohData.coherence);
+
+  const trace = {
+    x: cohData.p,
+    y: cohData.coherence,
+    type: "scatter",
+    mode: "lines",
+    line: {color: "#9467BD", width: 3},
+    name: "Coherence"
+  };
+  const marker = {
+    x: [x],
+    y: [y],
+    type: "scatter",
+    mode: "markers",
+    marker: {size: 10, color: "#ffd166"},
+    name: "当前 p"
+  };
+  const layout = {
+    title: "Coherence vs p",
+    xaxis: {title: "p (权重)"},
+    yaxis: {title: "l1-norm Coherence", range: [Math.max(0, yMin - 0.05), yMax + 0.08]},
+    shapes: [{
+      type: "line",
+      x0: x, x1: x, y0: yMin, y1: yMax,
+      line: {color: "#ff78b4", width: 1.5, dash: "dot"}
+    }],
+    margin: {l: 50, r: 20, t: 45, b: 45}
+  };
+  Plotly.react("plot-coherence-1d", [trace, marker], layout, {responsive: true, displayModeBar: false});
+
+  let level = "中等";
+  if (y >= 0.6) level = "较高（叠加资源较明显）";
+  else if (y <= 0.1) level = "较低（退相干更明显）";
+  document.getElementById("coh-guide").innerText =
+    `当前解释：p=${x.toFixed(2)} 时相干性=${y.toFixed(3)}，量子叠加资源${level}。`;
+}
+
 function loadCoherenceData() {
-    fetch("/analysis/api/coherence_scan").then(res => res.json()).then(data => {
-        const trace = { 
-            x: data.p, 
-            y: data.coherence, 
-            type: 'scatter', 
-            mode: 'lines',
-            line: {color: '#9467BD', width: 3} 
-        };
-        Plotly.newPlot('plot-coherence-1d', [trace], { 
-            title: 'Coherence vs p', 
-            xaxis: {title: 'p (权重)'}, 
-            yaxis: {title: 'l1-norm Coherence'} 
-        });
+  fetch("/analysis/api/coherence_scan")
+    .then(res => res.json())
+    .then(data => {
+      cohData = data;
+      renderCoherenceAt(Number(document.getElementById("coh-p").value));
     });
 }
+
+document.getElementById("coh-p").addEventListener("input", (e) => {
+  const p = Number(e.target.value);
+  document.getElementById("coh-p-text").innerText = p.toFixed(2);
+  renderCoherenceAt(p);
+});
 </script>
 {% endblock %}

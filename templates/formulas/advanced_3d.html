@@ -37,6 +37,9 @@
   <p id="loading-text" style="display:none; color: #666; margin-top: 10px;">
       正在进行二维张量网络扫描，计算量较大，请稍候...
   </p>
+  <p id="adv3d-guide" style="margin-top:8px; color:#aee1ff;">
+      当前解释：将鼠标悬停到曲面任意位置，可查看该点 (p, θ) 的物理量解释。
+  </p>
 
   <div id="plot-3d-main" style="width: 100%; height: 600px; margin-top: 20px;"></div>
 </div>
@@ -45,6 +48,7 @@
 
 <script>
 let global3DData = null;
+let currentMetricKey = "concurrence";
 
 const metricConfig = {
     "concurrence": { title: "Concurrence (共生纠缠度)", colorscale: "Viridis" },
@@ -58,6 +62,7 @@ const metricConfig = {
 
 function renderPlot(metricKey) {
     if (!global3DData) return;
+    currentMetricKey = metricKey;
     
     const dataObj = global3DData[metricKey];
     const config = metricConfig[metricKey];
@@ -81,7 +86,91 @@ function renderPlot(metricKey) {
         margin: {l: 0, r: 0, b: 0, t: 40}
     };
     
-    Plotly.newPlot('plot-3d-main', [trace], layout);
+    Plotly.newPlot('plot-3d-main', [trace], layout).then(() => {
+        bindHoverExplain();
+    });
+}
+
+function flattenZ(z2d) {
+    const out = [];
+    for (const row of z2d) {
+        for (const v of row) out.push(Number(v));
+    }
+    return out;
+}
+
+function levelText(v, vmin, vmax) {
+    const span = Math.max(1e-9, vmax - vmin);
+    const rel = (v - vmin) / span;
+    if (rel <= 0.33) return "区间低位";
+    if (rel >= 0.67) return "区间高位";
+    return "区间中位";
+}
+
+function metricExplain(metricKey, v, vmin, vmax) {
+    if (metricKey === "concurrence") {
+        if (v <= 1e-6) return "Concurrence≈0，当前点更接近可分态。";
+        if (v >= 0.5) return "Concurrence 较高，当前点纠缠较明显。";
+        return "Concurrence 为中等，存在一定纠缠。";
+    }
+    if (metricKey === "purity") {
+        if (v >= 0.9) return "Purity 较高，状态更接近纯态。";
+        if (v <= 0.4) return "Purity 较低，状态混合程度较高。";
+        return "Purity 中等，处于纯态与混合态之间。";
+    }
+    if (metricKey === "von_neumann") {
+        if (v <= 0.3) return "熵值较低，状态更接近纯态。";
+        if (v >= 1.5) return "熵值较高，状态混合程度较强。";
+        return "熵值中等，混合程度适中。";
+    }
+    if (metricKey === "ppt") {
+        if (v < 0) return "PPT 最小特征值小于 0，判据检测到纠缠。";
+        return "PPT 最小特征值不小于 0，判据未检测到纠缠。";
+    }
+    if (metricKey === "negativity") {
+        if (v <= 1e-6) return "Negativity≈0，当前点未显示纠缠。";
+        if (v >= 0.15) return "Negativity 较高，纠缠信号更明显。";
+        return "Negativity 为正，存在纠缠信号。";
+    }
+    if (metricKey === "fidelity") {
+        return "该值表示与页面目标态的重合度，越高越接近目标态。";
+    }
+    if (metricKey === "geometric") {
+        if (v >= 0.5) return "几何纠缠度较高，离可分态空间更远。";
+        if (v <= 0.1) return "几何纠缠度较低，离可分态空间更近。";
+        return "几何纠缠度中等。";
+    }
+    return `当前值位于${levelText(v, vmin, vmax)}。`;
+}
+
+function updateGuide(point) {
+    if (!global3DData) return;
+    const metric = currentMetricKey;
+    const dataObj = global3DData[metric];
+    if (!dataObj) return;
+    const zFlat = flattenZ(dataObj.z);
+    const vmin = Math.min(...zFlat);
+    const vmax = Math.max(...zFlat);
+    const x = Number(point.x);
+    const y = Number(point.y);
+    const z = Number(point.z);
+    const explain = metricExplain(metric, z, vmin, vmax);
+    document.getElementById("adv3d-guide").innerText =
+      `当前解释：p=${x.toFixed(3)}, θ=${y.toFixed(3)} rad, ${metric}=${z.toFixed(4)}（${levelText(z, vmin, vmax)}）。${explain}`;
+}
+
+function bindHoverExplain() {
+    const plot = document.getElementById("plot-3d-main");
+    if (plot.__hoverBound) return;
+    plot.on("plotly_hover", (ev) => {
+        if (!ev || !ev.points || !ev.points.length) return;
+        updateGuide(ev.points[0]);
+    });
+    plot.on("plotly_unhover", () => {
+        document.getElementById("adv3d-guide").innerText =
+          "当前解释：将鼠标悬停到曲面任意位置，可查看该点 (p, θ) 的物理量解释。";
+    });
+    plot.__hoverBound = true;
 }
 
 function loadAndRender3D() {

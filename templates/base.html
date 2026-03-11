@@ -5,6 +5,7 @@
     <title>量子纠缠分析与可视化平台</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/effects.css">
+    <link rel="stylesheet" href="/static/ui_enhance.css">
     <style>
         /* --- 基础 Header 样式 (默认占位) --- */
         .header {
@@ -83,8 +84,12 @@
         }
     </style>
 </head>
-<body data-module="{{ module_name | default('default') }}">
-    
+<body
+    data-module="{{ module_name | default('default') }}"
+    class="{% if (module_name | default('default')) == 'home' %}home-entry-prehide{% endif %}"
+>
+<div id="global-loadbar" class="global-loadbar"></div>
+<div class="aurora-bg"></div>
 <canvas id="bg-canvas"></canvas>
 
 <header class="header">
@@ -103,6 +108,8 @@
 </footer>
 
 <script src="{{ url_for('static', filename='particles.js') }}"></script>
+<script src="{{ url_for('static', filename='ui_enhance.js') }}"></script>
+<script src="{{ url_for('static', filename='home_guide_plus.js') }}"></script>
 {% block extra_js %}{% endblock %}
 
 <script>

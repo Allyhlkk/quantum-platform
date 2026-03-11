@@ -8,10 +8,28 @@
     $$\rho^{T_B} \ge 0 \iff \text{separable}$$
     $$\mathcal{N}(\rho) = \sum_{\lambda_i<0}|\lambda_i|$$
   </div>
+
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+    <details open>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+      <p style="color:#d7dbff; line-height:1.75;">PPT 判据在回答：这个混合态是否可能是可分态。对两比特系统，偏转置后最小特征值小于 0 通常表示检测到纠缠。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">来历与用途</summary>
+      <p style="color:#d7dbff; line-height:1.75;">PPT 是最常用的可分性判据之一，计算简单、适合教学可视化。这里同时显示 Negativity，帮助理解“是否纠缠”和“纠缠强度”的关系。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+      <p style="color:#d7dbff; line-height:1.75;">先看 y=0 阈值线：蓝线在 0 以下属于纠缠区；再看竖线对应当前 p；最后结合下方实时文本理解当前参数点的物理含义。</p>
+    </details>  </div>
 </div>
 
 <div class="card analysis-panel">
   <h2>PPT & Negativity Analysis (Werner State)</h2>
+
+  <p id="ppt-guide" style="margin:8px 0 0 0; color:#aee1ff;">当前解释：等待数据...</p>
+
 
   <div class="controls">
     <label>
@@ -21,7 +39,9 @@
     </label>
   </div>
 
-  <canvas id="ppt-canvas" width="600" height="400"></canvas>
+  
+
+  <canvas id="ppt-canvas" width="960" height="600" style="width:100%; height:auto; display:block;"></canvas>
 
   <p id="ppt-info"></p>
   <p id="ppt-explain"></p>
@@ -170,6 +190,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.getElementById("ppt-explain").innerText =
           data.explanation;
+        document.getElementById("ppt-guide").innerText =
+          data.ppt_min_eigenvalue < 0
+            ? `当前解释：p=${p.toFixed(2)} 时最小特征值小于 0，PPT 判据检测到纠缠。`
+            : `当前解释：p=${p.toFixed(2)} 时最小特征值不小于 0，PPT 判据未检测到纠缠。`;
       });
   }
 
@@ -181,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
         drawCurves(
           data.p,
           data.ppt_min_eigenvalues,
-          data.negativity   // ← 这里 99% 是 undefined
+          data.negativities
         );
         drawMarker(Number(slider.value));
       });

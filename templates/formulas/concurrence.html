@@ -7,10 +7,28 @@
     $$C(\rho) = \max(0, \lambda_1 - \lambda_2 - \lambda_3 - \lambda_4)$$
     $$\tilde{\rho} = (\sigma_y \otimes \sigma_y)\rho^*(\sigma_y \otimes \sigma_y)$$
   </div>
+
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+    <details open>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+      <p style="color:#d7dbff; line-height:1.75;">Concurrence 用来衡量两比特纠缠强度：C=0 通常表示可分，C 越大表示纠缠越强。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">来历与用途</summary>
+      <p style="color:#d7dbff; line-height:1.75;">它是两比特系统中最常用的纠缠度量之一，数值直观，适合作为“纠缠强度刻度”展示。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+      <p style="color:#d7dbff; line-height:1.75;">先看 C=0 阈值线，再看曲线是否高于阈值。红色竖线是当前 p 对应值，用于局部读数。</p>
+    </details>  </div>
 </div>
 
 <div class="card analysis-panel">
   <h2>Concurrence Analysis (Werner State)</h2>
+
+  <p id="conc-guide" style="margin:8px 0 0 0; color:#aee1ff;">当前解释：等待数据...</p>
+
 
   <div class="controls">
     <label>
@@ -20,7 +38,9 @@
     </label>
   </div>
 
-  <canvas id="conc-canvas" width="600" height="400"></canvas>
+  
+
+  <canvas id="conc-canvas" width="960" height="600" style="width:100%; height:auto; display:block;"></canvas>
 
   <p id="conc-info"></p>
   <p id="conc-explain"></p>
@@ -140,6 +160,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.getElementById("conc-explain").innerText =
           data.explanation;
+        document.getElementById("conc-guide").innerText =
+          data.concurrence > 0
+            ? `当前解释：p=${p.toFixed(2)} 时 C=${data.concurrence.toFixed(3)}，说明该态存在纠缠。`
+            : `当前解释：p=${p.toFixed(2)} 时 C≈0，当前点看起来接近可分态。`;
       });
   }
 

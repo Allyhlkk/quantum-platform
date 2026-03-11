@@ -3,11 +3,13 @@ from config import Config
 from core import formulas
 from routes.main import main_bp
 from routes.analysis import analysis_bp   # ⭐ 唯一实验入口
+from services.record_service import init_record_db
 
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    init_record_db()
 
     # 注册首页蓝图（包含首页路由）
     app.register_blueprint(main_bp)
