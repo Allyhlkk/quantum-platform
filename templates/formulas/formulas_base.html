@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -19,6 +19,75 @@
             box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42), inset 0 0 18px rgba(123, 108, 246, 0.12);
             backdrop-filter: blur(8px);
             padding: 10px;
+        }
+
+        .dock-collapsible {
+            transform: translateX(calc(100% - 32px));
+            transition: transform 0.25s ease;
+        }
+
+        .dock-collapsible:hover,
+        .dock-collapsible:focus-within {
+            transform: translateX(0);
+        }
+
+        .dock-tab {
+            position: absolute;
+            left: -32px;
+            top: 50%;
+            width: 32px;
+            height: 96px;
+            border-radius: 10px 0 0 10px;
+            background: rgba(123, 108, 246, 0.22);
+            border: 1px solid rgba(123, 108, 246, 0.4);
+            border-right: none;
+            color: #e6e0ff;
+            font-size: 12px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            transform: translateY(-50%);
+        }
+
+        .projection-mode .state-control-panel,
+        .projection-mode .formula-replay-dock {
+            display: none;
+        }
+
+        .projection-mode .aurora-bg,
+        .projection-mode #bg-canvas {
+            display: none;
+        }
+
+        body {
+            zoom: 0.85;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                zoom: 0.9;
+            }
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(123, 108, 246, 0.45) rgba(255, 255, 255, 0.06);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(123, 108, 246, 0.45);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(123, 108, 246, 0.7);
         }
 
         .formula-replay-title {
@@ -89,6 +158,95 @@
                 bottom: 8px;
                 width: auto;
             }
+            .dock-collapsible {
+                transform: none;
+            }
+            .dock-tab {
+                display: none;
+            }
+        }
+
+        .state-control-panel {
+            position: fixed;
+            right: 16px;
+            top: 16px;
+            z-index: 2500;
+            width: min(320px, calc(100vw - 24px));
+            background: rgba(10, 12, 26, 0.92);
+            border: 1px solid rgba(123, 108, 246, 0.42);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(10px);
+        }
+
+        .state-control-title {
+            font-size: 12px;
+            letter-spacing: 1px;
+            color: #cfc8ff;
+            margin-bottom: 8px;
+        }
+
+        .state-control-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .state-control-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .state-control-row label {
+            margin: 0;
+            font-size: 12px;
+            color: #bdb5ea;
+            min-width: 44px;
+        }
+
+        .state-control-row select,
+        .state-control-row input[type="range"] {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .state-control-row select {
+            height: 30px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(210, 214, 255, 0.55);
+            background: linear-gradient(180deg, rgba(34, 38, 68, 0.98), rgba(18, 20, 38, 0.96));
+            color: #f7f6ff;
+            font-size: 12px;
+        }
+
+        .state-control-row select:focus,
+        .state-control-row select:hover {
+            border-color: rgba(255, 214, 102, 0.7);
+            box-shadow: 0 0 0 2px rgba(255, 214, 102, 0.18);
+            outline: none;
+        }
+
+        .state-control-row select option {
+            background: #141728;
+            color: #f0efff;
+        }
+
+        .state-control-row span {
+            font-size: 12px;
+            color: #aee1ff;
+            min-width: 48px;
+            text-align: right;
+        }
+
+        @media (max-width: 900px) {
+            .state-control-panel {
+                left: 8px;
+                right: 8px;
+                top: 8px;
+                width: auto;
+            }
         }
     </style>
 </head>
@@ -101,7 +259,27 @@
     {% block content %}{% endblock %}
 </main>
 
-<div id="formula-replay-dock" class="formula-replay-dock">
+<div id="state-control-panel" class="state-control-panel dock-collapsible">
+    <div class="dock-tab">态切换</div>
+    <div class="state-control-title">量子态设置</div>
+    <div class="state-control-row">
+        <label for="state-type">态类型</label>
+        <select id="state-type">
+            <option value="werner">Werner 态（噪声 p）</option>
+            <option value="generalized">广义 Werner（p, θ）</option>
+            <option value="bell">Bell 态 |Ψ-></option>
+            <option value="pure_theta">纯态 |ψ(θ)></option>
+        </select>
+    </div>
+    <div class="state-control-row" id="state-theta-row">
+        <label for="state-theta">角度 θ</label>
+        <input id="state-theta" type="range" min="0" max="1.5708" step="0.01" value="0.7854">
+        <span id="state-theta-text">0.79</span>
+    </div>
+</div>
+
+<div id="formula-replay-dock" class="formula-replay-dock dock-collapsible">
+    <div class="dock-tab">参数回放</div>
     <div class="formula-replay-title">参数回放（教学演示）</div>
     <div class="formula-replay-row">
         <label for="formula-replay-target">目标参数</label>
@@ -129,6 +307,116 @@
 
 <script src="{{ url_for('static', filename='particles.js') }}"></script>
 <script src="{{ url_for('static', filename='ui_enhance.js') }}"></script>
+
+<script>
+(function () {
+    const panel = document.getElementById('state-control-panel');
+    const typeSel = document.getElementById('state-type');
+    const thetaRow = document.getElementById('state-theta-row');
+    const thetaInput = document.getElementById('state-theta');
+    const thetaText = document.getElementById('state-theta-text');
+    if (!panel || !typeSel || !thetaRow || !thetaInput || !thetaText) return;
+
+    const callbacks = [];
+    const storage = window.localStorage;
+    const storedType = storage ? storage.getItem('kq_state_type') : null;
+    const storedTheta = storage ? storage.getItem('kq_state_theta') : null;
+
+    if (storedType && Array.from(typeSel.options).some(opt => opt.value === storedType)) {
+        typeSel.value = storedType;
+    }
+    if (storedTheta && !Number.isNaN(Number(storedTheta))) {
+        thetaInput.value = String(Number(storedTheta));
+    }
+
+    function needsTheta(type) {
+        return type === 'generalized' || type === 'pure_theta';
+    }
+
+    function getType() {
+        return typeSel.value || 'werner';
+    }
+
+    function getTheta() {
+        const val = Number(thetaInput.value);
+        if (!Number.isFinite(val)) return Math.PI / 4;
+        return Math.min(Math.max(val, 0), Math.PI / 2);
+    }
+
+    function sync() {
+        const type = getType();
+        thetaRow.style.display = needsTheta(type) ? 'flex' : 'none';
+        thetaText.textContent = getTheta().toFixed(2);
+    }
+
+    function emitChange() {
+        callbacks.forEach(cb => cb());
+        autoTriggerLoad();
+    }
+
+    let autoLoadTimer = null;
+    function autoTriggerLoad() {
+        if (autoLoadTimer) window.clearTimeout(autoLoadTimer);
+        autoLoadTimer = window.setTimeout(() => {
+            if (typeof window.FormulaAutoLoad === "function") {
+                window.FormulaAutoLoad();
+                return;
+            }
+            const btn = document.getElementById("load-btn");
+            if (btn && !btn.disabled) btn.click();
+        }, 0);
+    }
+
+    function query(extra) {
+        const params = new URLSearchParams();
+        if (extra) {
+            Object.entries(extra).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== '') {
+                    params.set(key, String(value));
+                }
+            });
+        }
+        const type = getType();
+        params.set('state_type', type);
+        if (needsTheta(type)) {
+            params.set('theta', getTheta().toFixed(4));
+        }
+        return params.toString();
+    }
+
+    function buildUrl(base, extra) {
+        const qs = query(extra);
+        return qs ? `${base}?${qs}` : base;
+    }
+
+    window.FormulaState = {
+        getType,
+        getTheta,
+        query,
+        buildUrl,
+        onChange(callback) {
+            if (typeof callback === 'function') {
+                callbacks.push(callback);
+            }
+        },
+        sync,
+    };
+
+    typeSel.addEventListener('change', () => {
+        if (storage) storage.setItem('kq_state_type', getType());
+        sync();
+        emitChange();
+    });
+
+    thetaInput.addEventListener('input', () => {
+        if (storage) storage.setItem('kq_state_theta', String(getTheta()));
+        sync();
+        emitChange();
+    });
+
+    sync();
+})();
+</script>
 
 {% block extra_js %}{% endblock %}
 
@@ -297,3 +585,5 @@ window.MathJax = {
 
 </body>
 </html>
+
+

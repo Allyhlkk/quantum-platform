@@ -102,7 +102,7 @@ function renderGeometricAt(p) {
 }
 
 function loadGeometricData() {
-  fetch("/analysis/api/geometric_scan")
+  fetch(FormulaState.buildUrl("/analysis/api/geometric_scan"))
     .then(res => res.json())
     .then(data => {
       geoData = data;
@@ -115,5 +115,11 @@ document.getElementById("geo-p").addEventListener("input", (e) => {
   document.getElementById("geo-p-text").innerText = p.toFixed(2);
   renderGeometricAt(p);
 });
+
+if (window.FormulaState) {
+  FormulaState.onChange(() => {
+    loadGeometricData();
+  });
+}
 </script>
 {% endblock %}

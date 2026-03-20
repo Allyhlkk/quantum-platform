@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const b = document.getElementById("b").value;
 
     // ⭐⭐⭐ 关键修正：统一走 analysis API
-    fetch(`/analysis/api/chsh?a=${a}&a_p=${a_p}&b=${b}`)
+    fetch(FormulaState.buildUrl("/analysis/api/chsh", { a, a_p, b }))
       .then(res => res.json())
       .then(data => {
         drawCurve(data.theta, data.S_vals);
@@ -221,6 +221,10 @@ document.addEventListener("DOMContentLoaded", () => {
             ? `当前解释：S_max=${Number(data.S_max).toFixed(3)} > 2，当前设置下出现 CHSH 违背（非定域性信号）。`
             : `当前解释：S_max=${Number(data.S_max).toFixed(3)} ≤ 2，当前设置下未观察到 CHSH 违背。`;
       });
+  }
+
+  if (window.FormulaState) {
+    FormulaState.onChange(() => updateCHSH());
   }
 
 });

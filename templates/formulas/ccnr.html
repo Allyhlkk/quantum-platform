@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateSingleP(p) {
-    fetch(`/analysis/api/ccnr?p=${p}`)
+    fetch(FormulaState.buildUrl("/analysis/api/ccnr", { p }))
       .then(res => res.json())
       .then(data => {
         document.getElementById("ccnr-info").innerText =
@@ -167,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function loadScan() {
-    fetch(`/analysis/api/ccnr/scan`)
+    fetch(FormulaState.buildUrl("/analysis/api/ccnr/scan"))
       .then(res => res.json())
       .then(data => {
         drawCurve(data.p, data.ccnr_trace_norm);
@@ -181,6 +181,14 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSingleP(p);
     drawMarker(p);
   });
+
+  if (window.FormulaState) {
+    FormulaState.onChange(() => {
+      loadScan();
+      updateSingleP(Number(slider.value));
+      drawMarker(Number(slider.value));
+    });
+  }
 
   slider.value = 0.5;
   pVal.innerText = "0.50";

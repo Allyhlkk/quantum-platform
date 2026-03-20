@@ -17,6 +17,7 @@ from core.formulas.measures.concurrence import concurrence
 from core.states.generalized import generalized_werner
 from services.pipeline import universal_1d_scan
 from core.states.bell import psi_minus
+from core.states.factory import vector_state
 from services.ml_service import run_ml_benchmark
 from services.record_service import (
     create_record,
@@ -36,6 +37,11 @@ from services.analysis_service import (
 
 
 analysis_bp = Blueprint("analysis", __name__, url_prefix="/analysis")
+
+def _state_args(default_type: str = "werner"):
+    state_type = str(request.args.get("state_type", default_type)).strip() or default_type
+    theta = request.args.get("theta", None, type=float)
+    return state_type, theta
 
 
 # ===============================
@@ -134,8 +140,8 @@ def chsh_api():
         a_p = q(request.args.get("a_p", 0))
         b = q(request.args.get("b", 0))
 
-        state = psi_minus()
-
+        state_type, theta = _state_args(default_type="bell")
+        state = vector_state(state_type, theta=theta)
         result = analyze_chsh(state, a, a_p, b)
 
         return jsonify({
@@ -161,7 +167,8 @@ def werner_api():
         if not (0.0 <= p <= 1.0):
             raise ValueError("p must be in [0, 1]")
 
-        result = analyze_werner(p)
+        state_type, theta = _state_args(default_type="werner")
+        result = analyze_werner(p, state_type=state_type, theta=theta)
 
         return jsonify({
             **result.values,
@@ -181,7 +188,8 @@ def werner_scan_api():
         if step <= 0 or step > 0.1:
             raise ValueError("step must be in (0, 0.1]")
 
-        data = analyze_werner_scan(step)
+        state_type, theta = _state_args(default_type="werner")
+        data = analyze_werner_scan(step, state_type=state_type, theta=theta)
 
         return jsonify(data)
 
@@ -195,7 +203,8 @@ def concurrence_api():
     """
     try:
         p = float(request.args.get("p", 0.0))
-        result = analyze_concurrence(p)
+        state_type, theta = _state_args(default_type="werner")
+        result = analyze_concurrence(p, state_type=state_type, theta=theta)
 
         return jsonify({
             **result.values,
@@ -208,7 +217,8 @@ def concurrence_api():
 @analysis_bp.route("/api/concurrence/scan", methods=["GET"])
 def concurrence_scan_api():
     try:
-        data = analyze_concurrence_scan(step=0.01)
+        state_type, theta = _state_args(default_type="werner")
+        data = analyze_concurrence_scan(step=0.01, state_type=state_type, theta=theta)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -233,7 +243,8 @@ def witness_api():
     """
     try:
         p = float(request.args.get("p", 0.0))
-        result = analyze_witness(p)
+        state_type, theta = _state_args(default_type="werner")
+        result = analyze_witness(p, state_type=state_type, theta=theta)
 
         return jsonify({
             **result.values,
@@ -246,7 +257,8 @@ def witness_api():
 @analysis_bp.route("/api/witness/scan", methods=["GET"])
 def witness_scan_api():
     try:
-        data = analyze_witness_scan(step=0.01)
+        state_type, theta = _state_args(default_type="werner")
+        data = analyze_witness_scan(step=0.01, state_type=state_type, theta=theta)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -258,7 +270,8 @@ def ccnr_api():
     """
     try:
         p = float(request.args.get("p", 0.0))
-        result = analyze_ccnr(p)
+        state_type, theta = _state_args(default_type="werner")
+        result = analyze_ccnr(p, state_type=state_type, theta=theta)
         return jsonify({
             **result.values,
             "explanation": result.explanation
@@ -269,7 +282,8 @@ def ccnr_api():
 @analysis_bp.route("/api/ccnr/scan", methods=["GET"])
 def ccnr_scan_api():
     try:
-        data = analyze_ccnr_scan(step=0.01)
+        state_type, theta = _state_args(default_type="werner")
+        data = analyze_ccnr_scan(step=0.01, state_type=state_type, theta=theta)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -281,7 +295,8 @@ def reduction_api():
     """
     try:
         p = float(request.args.get("p", 0.0))
-        result = analyze_reduction(p)
+        state_type, theta = _state_args(default_type="werner")
+        result = analyze_reduction(p, state_type=state_type, theta=theta)
         return jsonify({
             **result.values,
             "explanation": result.explanation
@@ -292,7 +307,8 @@ def reduction_api():
 @analysis_bp.route("/api/reduction/scan", methods=["GET"])
 def reduction_scan_api():
     try:
-        data = analyze_reduction_scan(step=0.01)
+        state_type, theta = _state_args(default_type="werner")
+        data = analyze_reduction_scan(step=0.01, state_type=state_type, theta=theta)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -304,7 +320,8 @@ def chsh_horodecki_api():
     """
     try:
         p = float(request.args.get("p", 0.0))
-        result = analyze_horodecki(p)
+        state_type, theta = _state_args(default_type="werner")
+        result = analyze_horodecki(p, state_type=state_type, theta=theta)
         return jsonify({
             **result.values,
             "explanation": result.explanation
@@ -318,7 +335,8 @@ def chsh_horodecki_scan_api():
         step = float(request.args.get("step", 0.01))
         if step <= 0 or step > 0.1:
             raise ValueError("step must be in (0, 0.1]")
-        data = analyze_horodecki_scan(step=step)
+        state_type, theta = _state_args(default_type="werner")
+        data = analyze_horodecki_scan(step=step, state_type=state_type, theta=theta)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -341,7 +359,8 @@ def linear_entropy_api():
     """
     try:
         p = float(request.args.get("p", 0.0))
-        result = analyze_linear_entropy(p)
+        state_type, theta = _state_args(default_type="werner")
+        result = analyze_linear_entropy(p, state_type=state_type, theta=theta)
         return jsonify({
             **result.values,
             "explanation": result.explanation
@@ -355,7 +374,8 @@ def linear_entropy_scan_api():
         step = float(request.args.get("step", 0.01))
         if step <= 0 or step > 0.1:
             raise ValueError("step must be in (0, 0.1]")
-        data = analyze_linear_entropy_scan(step=step)
+        state_type, theta = _state_args(default_type="werner")
+        data = analyze_linear_entropy_scan(step=step, state_type=state_type, theta=theta)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -379,7 +399,8 @@ def purity_page():
 # 提供 Purity 1D 扫描数据
 @analysis_bp.route('/api/purity_scan')
 def purity_scan_data():
-    data = analyze_purity_scan(step=0.01)
+    state_type, theta = _state_args(default_type="werner")
+    data = analyze_purity_scan(step=0.01, state_type=state_type, theta=theta)
     return jsonify(data)
 
 # 渲染 3D 页面
@@ -435,7 +456,8 @@ def von_neumann_page():
 # 提供 Von Neumann 1D 扫描数据
 @analysis_bp.route('/api/von_neumann_scan')
 def von_neumann_scan_data():
-    data = analyze_von_neumann_scan(step=0.01)
+    state_type, theta = _state_args(default_type="werner")
+    data = analyze_von_neumann_scan(step=0.01, state_type=state_type, theta=theta)
     return jsonify(data)
 
 @analysis_bp.route('/formation')
@@ -444,7 +466,8 @@ def formation_page():
 
 @analysis_bp.route('/api/formation_scan')
 def formation_scan_data():
-    data = analyze_formation_scan(step=0.01)
+    state_type, theta = _state_args(default_type="werner")
+    data = analyze_formation_scan(step=0.01, state_type=state_type, theta=theta)
     return jsonify(data)
 
 @analysis_bp.route('/fidelity')
@@ -453,7 +476,8 @@ def fidelity_page():
 
 @analysis_bp.route('/api/fidelity_scan')
 def fidelity_scan_data():
-    data = analyze_fidelity_scan(step=0.01)
+    state_type, theta = _state_args(default_type="werner")
+    data = analyze_fidelity_scan(step=0.01, state_type=state_type, theta=theta)
     return jsonify(data)
 
 @analysis_bp.route('/coherence')
@@ -462,7 +486,8 @@ def coherence_page():
 
 @analysis_bp.route('/api/coherence_scan')
 def coherence_scan_data():
-    data = analyze_coherence_scan(step=0.01)
+    state_type, theta = _state_args(default_type="werner")
+    data = analyze_coherence_scan(step=0.01, state_type=state_type, theta=theta)
     return jsonify(data)
 
 @analysis_bp.route('/geometric')
@@ -471,7 +496,8 @@ def geometric_page():
 
 @analysis_bp.route('/api/geometric_scan')
 def geometric_scan_data():
-    data = analyze_geometric_scan(step=0.01)
+    state_type, theta = _state_args(default_type="werner")
+    data = analyze_geometric_scan(step=0.01, state_type=state_type, theta=theta)
     return jsonify(data)
 
 

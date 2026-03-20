@@ -256,15 +256,20 @@
       finalizeHomeSplash(splash, 3000);
     }
 
+    function onKeydown(e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        startSequence();
+      }
+    }
+
     if (startArea) {
       startArea.addEventListener("click", startSequence);
-      startArea.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          startSequence();
-        }
-      });
+      startArea.addEventListener("keydown", onKeydown);
     }
+
+    splash.addEventListener("click", startSequence);
+    document.addEventListener("keydown", onKeydown);
   }
 
   function runHomeSplash() {

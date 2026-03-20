@@ -82,6 +82,35 @@
             max-width: none;
             padding: 0;
         }
+
+          body {
+              zoom: 0.85;
+          }
+
+          @media (max-width: 900px) {
+              body {
+                  zoom: 0.9;
+              }
+          }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(123, 108, 246, 0.45) rgba(255, 255, 255, 0.06);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.06);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(123, 108, 246, 0.45);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(123, 108, 246, 0.7);
+        }
     </style>
 </head>
 <body

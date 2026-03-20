@@ -102,7 +102,7 @@ function renderCoherenceAt(p) {
 }
 
 function loadCoherenceData() {
-  fetch("/analysis/api/coherence_scan")
+  fetch(FormulaState.buildUrl("/analysis/api/coherence_scan"))
     .then(res => res.json())
     .then(data => {
       cohData = data;
@@ -115,5 +115,11 @@ document.getElementById("coh-p").addEventListener("input", (e) => {
   document.getElementById("coh-p-text").innerText = p.toFixed(2);
   renderCoherenceAt(p);
 });
+
+if (window.FormulaState) {
+  FormulaState.onChange(() => {
+    loadCoherenceData();
+  });
+}
 </script>
 {% endblock %}

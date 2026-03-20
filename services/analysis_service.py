@@ -4,6 +4,7 @@ from visualization.renderers.curve import render_curve
 
 from core.states.werner import werner_state
 from core.states.generalized import generalized_werner
+from core.states.factory import density_state, scan_state_generator
 from core.formulas.criteria.ppt import ppt_min_eigenvalue
 from core.formulas.measures.negativity import negativity
 from core.formulas.measures.concurrence import concurrence
@@ -44,8 +45,8 @@ def analyze_chsh(state, a, a_p, b, step=0.02, *, with_plot=False):
 # =========================================================
 # 1D 分析与扫描路由支持
 # =========================================================
-def analyze_werner(p: float) -> AnalysisResult:
-    rho = werner_state(p)
+def analyze_werner(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
     ppt_min = ppt_min_eigenvalue(rho)
     neg = negativity(rho)
     conc = concurrence(rho)
@@ -67,10 +68,11 @@ def analyze_werner(p: float) -> AnalysisResult:
         explanation="PPT 判据检测到纠缠态。" if ppt_min < 0 else "PPT 判据未检测到纠缠。"
     )
 
-def analyze_werner_scan(step: float = 0.01):
-    ppt_res = universal_1d_scan(werner_state, ppt_min_eigenvalue, 0.0, 1.0, step)
-    neg_res = universal_1d_scan(werner_state, negativity, 0.0, 1.0, step)
-    pur_res = universal_1d_scan(werner_state, purity, 0.0, 1.0, step)
+def analyze_werner_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    generator = scan_state_generator(state_type, theta)
+    ppt_res = universal_1d_scan(generator, ppt_min_eigenvalue, 0.0, 1.0, step)
+    neg_res = universal_1d_scan(generator, negativity, 0.0, 1.0, step)
+    pur_res = universal_1d_scan(generator, purity, 0.0, 1.0, step)
     
     return {
         "p": ppt_res["x"],
@@ -79,32 +81,32 @@ def analyze_werner_scan(step: float = 0.01):
         "purities": pur_res["y"]
     }
 
-def analyze_concurrence(p: float) -> AnalysisResult:
-    rho = werner_state(p)
+def analyze_concurrence(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
     c = concurrence(rho)
     return AnalysisResult(
         values={"p": p, "concurrence": c, "entangled": c > 0},
         explanation="Concurrence 大于 0，系统处于纠缠态。" if c > 0 else "Concurrence 为 0，系统为可分态。"
     )
 
-def analyze_concurrence_scan(step: float = 0.01):
-    res = universal_1d_scan(werner_state, concurrence, 0.0, 1.0, step)
+def analyze_concurrence_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), concurrence, 0.0, 1.0, step)
     return {"p": res["x"], "concurrence": res["y"]}
 
-def analyze_witness(p: float) -> AnalysisResult:
-    rho = werner_state(p)
+def analyze_witness(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
     val = witness_expectation(rho)
     return AnalysisResult(
         values={"p": p, "witness": val, "entangled": val < 0},
         explanation="纠缠见证期望值为负，检测到纠缠态。" if val < 0 else "纠缠见证期望值为正，未检测到纠缠。"
     )
 
-def analyze_witness_scan(step: float = 0.01):
-    res = universal_1d_scan(werner_state, witness_expectation, 0.0, 1.0, step)
+def analyze_witness_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), witness_expectation, 0.0, 1.0, step)
     return {"p": res["x"], "witness": res["y"]}
 
-def analyze_ccnr(p: float) -> AnalysisResult:
-    rho = werner_state(p)
+def analyze_ccnr(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
     norm_1 = ccnr_trace_norm(rho)
     return AnalysisResult(
         values={
@@ -115,12 +117,12 @@ def analyze_ccnr(p: float) -> AnalysisResult:
         explanation="CCNR trace norm > 1, entanglement detected." if norm_1 > 1.0 else "CCNR trace norm <= 1, no entanglement detected by CCNR."
     )
 
-def analyze_ccnr_scan(step: float = 0.01):
-    res = universal_1d_scan(werner_state, ccnr_trace_norm, 0.0, 1.0, step)
+def analyze_ccnr_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), ccnr_trace_norm, 0.0, 1.0, step)
     return {"p": res["x"], "ccnr_trace_norm": res["y"]}
 
-def analyze_reduction(p: float) -> AnalysisResult:
-    rho = werner_state(p)
+def analyze_reduction(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
     min_a, min_b = reduction_min_eigenvalues(rho)
     is_separable = (min_a >= 0.0) and (min_b >= 0.0)
     return AnalysisResult(
@@ -133,15 +135,16 @@ def analyze_reduction(p: float) -> AnalysisResult:
         explanation="Reduction criterion violated, entanglement detected." if not is_separable else "Reduction criterion not violated."
     )
 
-def analyze_reduction_scan(step: float = 0.01):
+def analyze_reduction_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
     p_list = []
     min_a_list = []
     min_b_list = []
+    generator = scan_state_generator(state_type, theta)
 
     ps = np.arange(0.0, 1.0 + step / 2, step)
     for p in ps:
         p_val = round(float(p), 6)
-        rho = werner_state(p_val)
+        rho = generator(p_val)
         min_a, min_b = reduction_min_eigenvalues(rho)
         p_list.append(p_val)
         min_a_list.append(min_a)
@@ -149,8 +152,8 @@ def analyze_reduction_scan(step: float = 0.01):
 
     return {"p": p_list, "reduction_min_a": min_a_list, "reduction_min_b": min_b_list}
 
-def analyze_horodecki(p: float) -> AnalysisResult:
-    rho = werner_state(p)
+def analyze_horodecki(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
     s_max, m_val, violation = max_chsh_horodecki(rho)
     margin = s_max - 2.0
     return AnalysisResult(
@@ -164,14 +167,15 @@ def analyze_horodecki(p: float) -> AnalysisResult:
         explanation="CHSH violated (S_max > 2)." if violation else "No CHSH violation (S_max <= 2)."
     )
 
-def analyze_horodecki_scan(step: float = 0.01):
+def analyze_horodecki_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
     p_list = []
     s_list = []
     margin_list = []
+    generator = scan_state_generator(state_type, theta)
     ps = np.arange(0.0, 1.0 + step / 2, step)
     for p in ps:
         p_val = round(float(p), 6)
-        rho = werner_state(p_val)
+        rho = generator(p_val)
         s_max, _, _ = max_chsh_horodecki(rho)
         p_list.append(p_val)
         s_list.append(float(s_max))
@@ -204,29 +208,30 @@ def analyze_horodecki_map(resolution: int = 30):
         "violation_mask": mask_grid.tolist(),
     }
 
-def analyze_purity(p: float) -> AnalysisResult:
-    rho = werner_state(p)
+def analyze_purity(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
     pur = purity(rho)
     return AnalysisResult(
         values={"p": p, "purity": pur, "is_pure": pur >= 0.9999},
         explanation="系统为纯态 (Purity = 1)。" if pur >= 0.9999 else f"系统为混合态，纯度为 {pur:.4f}。"
     )
 
-def analyze_purity_scan(step: float = 0.01):
-    res = universal_1d_scan(werner_state, purity, 0.0, 1.0, step)
+def analyze_purity_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), purity, 0.0, 1.0, step)
     return {"p": res["x"], "purity": res["y"]}
 
-def analyze_linear_entropy(p: float) -> AnalysisResult:
-    rho = werner_state(p)
+def analyze_linear_entropy(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
     s_l = linear_entropy(rho)
     return AnalysisResult(
         values={"p": p, "linear_entropy": s_l, "is_pure": s_l <= 1e-10},
         explanation="State is pure (S_L ~= 0)." if s_l <= 1e-10 else f"State is mixed with S_L = {s_l:.4f}."
     )
 
-def analyze_linear_entropy_scan(step: float = 0.01):
-    s_res = universal_1d_scan(werner_state, linear_entropy, 0.0, 1.0, step)
-    c_res = universal_1d_scan(werner_state, concurrence, 0.0, 1.0, step)
+def analyze_linear_entropy_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    generator = scan_state_generator(state_type, theta)
+    s_res = universal_1d_scan(generator, linear_entropy, 0.0, 1.0, step)
+    c_res = universal_1d_scan(generator, concurrence, 0.0, 1.0, step)
     return {
         "p": s_res["x"],
         "linear_entropy": s_res["y"],
@@ -270,40 +275,41 @@ def analyze_linear_entropy_phase(resolution: int = 30):
         },
     }
 
-def analyze_von_neumann(p: float) -> AnalysisResult:
-    rho = werner_state(p)
+def analyze_von_neumann(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
     ent = von_neumann_entropy(rho)
     return AnalysisResult(
         values={"p": p, "von_neumann": ent},
         explanation=f"冯·诺依曼熵为 {ent:.4f}。"
     )
 
-def analyze_von_neumann_scan(step: float = 0.01):
-    res = universal_1d_scan(werner_state, von_neumann_entropy, 0.0, 1.0, step)
+def analyze_von_neumann_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), von_neumann_entropy, 0.0, 1.0, step)
     return {"p": res["x"], "von_neumann": res["y"]}
 
-def analyze_formation_scan(step: float = 0.01):
-    res = universal_1d_scan(werner_state, entanglement_of_formation, 0.0, 1.0, step)
+def analyze_formation_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), entanglement_of_formation, 0.0, 1.0, step)
     return {"p": res["x"], "formation": res["y"]}
 
-def analyze_fidelity_scan(step: float = 0.01):
-    res = universal_1d_scan(werner_state, state_fidelity, 0.0, 1.0, step)
+def analyze_fidelity_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), state_fidelity, 0.0, 1.0, step)
     return {"p": res["x"], "fidelity": res["y"]}
 
-def analyze_coherence_scan(step: float = 0.01):
-    res = universal_1d_scan(werner_state, l1_coherence, 0.0, 1.0, step)
+def analyze_coherence_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), l1_coherence, 0.0, 1.0, step)
     return {"p": res["x"], "coherence": res["y"]}
 
-def analyze_geometric_scan(step: float = 0.01):
-    res = universal_1d_scan(werner_state, geometric_measure, 0.0, 1.0, step)
+def analyze_geometric_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), geometric_measure, 0.0, 1.0, step)
     return {"p": res["x"], "geometric": res["y"]}
 
 # =========================================================
 # 广义 Werner 态 3D 分析支持 (2D Scan)
 # =========================================================
-def analyze_advanced_3d_scan(resolution: int = 15):
+def analyze_advanced_3d_scan(resolution: int = 15, state_type: str = "generalized"):
     """
-    生成 3D 曲面图所需的数据。
+    生成 3D 曲面图所需的数据（p-θ 扫描）。
+    state_type 控制使用哪类量子态生成密度矩阵。
     """
     p_step = 1.0 / resolution
     theta_step = (np.pi / 2) / resolution
@@ -311,8 +317,9 @@ def analyze_advanced_3d_scan(resolution: int = 15):
     p1_range = (0.0, 1.0, p_step)
     p2_range = (0.0, float(np.pi/2), theta_step)
     
-# 定义执行扫描的辅助闭包，减少代码重复
-    scan = lambda func: universal_2d_scan(generalized_werner, func, p1_range, p2_range)
+    # 定义执行扫描的辅助闭包，减少代码重复
+    state_gen = lambda p, theta: density_state(state_type, p=p, theta=theta)
+    scan = lambda func: universal_2d_scan(state_gen, func, p1_range, p2_range)
     
     return {
             "concurrence": scan(concurrence),
@@ -326,7 +333,7 @@ def analyze_advanced_3d_scan(resolution: int = 15):
             "negativity": scan(negativity)
         }
 
-def analyze_criteria_compare_scan(resolution: int = 30):
+def analyze_criteria_compare_scan(resolution: int = 30, state_type: str = "generalized"):
     """
     Build p-theta heatmap data for PPT / CCNR / Reduction criteria.
     Returns criterion margins and a consensus count map (0..3).
@@ -344,7 +351,7 @@ def analyze_criteria_compare_scan(resolution: int = 30):
 
     for j, theta in enumerate(theta_vals):
         for i, p in enumerate(p_vals):
-            rho = generalized_werner(float(p), float(theta))
+            rho = density_state(state_type, p=float(p), theta=float(theta))
 
             ppt_min = ppt_min_eigenvalue(rho)
             ccnr_norm = ccnr_trace_norm(rho)

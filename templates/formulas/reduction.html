@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateSingleP(p) {
-    fetch(`/analysis/api/reduction?p=${p}`)
+    fetch(FormulaState.buildUrl("/analysis/api/reduction", { p }))
       .then(res => res.json())
       .then(data => {
         document.getElementById("reduction-info").innerText =
@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function loadScan() {
-    fetch(`/analysis/api/reduction/scan`)
+    fetch(FormulaState.buildUrl("/analysis/api/reduction/scan"))
       .then(res => res.json())
       .then(data => {
         drawCurves(data.p, data.reduction_min_a, data.reduction_min_b);
@@ -180,6 +180,14 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSingleP(p);
     drawMarker(p);
   });
+
+  if (window.FormulaState) {
+    FormulaState.onChange(() => {
+      loadScan();
+      updateSingleP(Number(slider.value));
+      drawMarker(Number(slider.value));
+    });
+  }
 
   slider.value = 0.5;
   pVal.innerText = "0.50";

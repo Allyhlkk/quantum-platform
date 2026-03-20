@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateSingleP(p) {
-    fetch(`/analysis/api/witness?p=${p}`)
+    fetch(FormulaState.buildUrl("/analysis/api/witness", { p }))
       .then(res => res.json())
       .then(data => {
         document.getElementById("wit-info").innerText =
@@ -167,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function loadScan() {
-    fetch(`/analysis/api/witness/scan`)
+    fetch(FormulaState.buildUrl("/analysis/api/witness/scan"))
       .then(res => res.json())
       .then(data => {
         drawCurve(data.p, data.witness);
@@ -181,6 +181,14 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSingleP(p);
     drawMarker(p);
   });
+
+  if (window.FormulaState) {
+    FormulaState.onChange(() => {
+      loadScan();
+      updateSingleP(Number(slider.value));
+      drawMarker(Number(slider.value));
+    });
+  }
 
   slider.value = 0.5;
   pVal.innerText = "0.50";

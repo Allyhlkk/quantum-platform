@@ -99,7 +99,7 @@ function loadFormationData() {
     document.getElementById("loading-text").style.display = "block";
     document.getElementById("load-btn").disabled = true;
 
-    fetch("/analysis/api/formation_scan")
+    fetch(FormulaState.buildUrl("/analysis/api/formation_scan"))
         .then(res => res.json())
         .then(data => {
             document.getElementById("loading-text").style.display = "none";
@@ -120,5 +120,11 @@ document.getElementById("eof-p").addEventListener("input", (e) => {
     document.getElementById("eof-p-text").innerText = p.toFixed(2);
     renderFormationAt(p);
 });
+
+if (window.FormulaState) {
+    FormulaState.onChange(() => {
+        loadFormationData();
+    });
+}
 </script>
 {% endblock %}

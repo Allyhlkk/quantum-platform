@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateSingleP(p) {
-    fetch(`/analysis/api/werner?p=${p}`)
+    fetch(FormulaState.buildUrl("/analysis/api/werner", { p }))
       .then(res => res.json())
       .then(data => {
         document.getElementById("ppt-info").innerText =
@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function loadScan() {
-    fetch(`/analysis/api/werner/scan`)
+    fetch(FormulaState.buildUrl("/analysis/api/werner/scan"))
       .then(res => res.json())
       .then(data => {
         console.log("scan keys:", Object.keys(data));
@@ -217,6 +217,14 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSingleP(p);
     drawMarker(p);
   });
+
+  if (window.FormulaState) {
+    FormulaState.onChange(() => {
+      loadScan();
+      updateSingleP(Number(slider.value));
+      drawMarker(Number(slider.value));
+    });
+  }
 
   // init
   slider.value = 0.5;

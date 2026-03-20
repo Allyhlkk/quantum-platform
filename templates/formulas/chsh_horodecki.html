@@ -304,7 +304,7 @@ function toggleThetaPlay() {
 }
 
 function loadSingleP(p) {
-  fetch(`/analysis/api/chsh_horodecki?p=${p}`)
+  fetch(FormulaState.buildUrl("/analysis/api/chsh_horodecki", { p }))
     .then(r => r.json())
     .then(d => {
       if (d.error) throw new Error(d.error);
@@ -322,7 +322,7 @@ function loadSingleP(p) {
 }
 
 function loadScanAndRender(p) {
-  fetch("/analysis/api/chsh_horodecki/scan?step=0.01")
+  fetch(FormulaState.buildUrl("/analysis/api/chsh_horodecki/scan", { step: 0.01 }))
     .then(r => r.json())
     .then(d => {
       if (d.error) throw new Error(d.error);
@@ -354,6 +354,14 @@ document.getElementById("p-slider").addEventListener("input", (e) => {
   if (scanData) renderCurve(scanData, p);
   loadSingleP(p);
 });
+
+if (window.FormulaState) {
+  FormulaState.onChange(() => {
+    const p = Number(document.getElementById("p-slider").value);
+    loadScanAndRender(p);
+    loadSingleP(p);
+  });
+}
 
 document.getElementById("load-map-btn").addEventListener("click", loadMapAndRender);
 document.getElementById("play-theta-btn").addEventListener("click", toggleThetaPlay);

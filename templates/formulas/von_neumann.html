@@ -116,7 +116,7 @@ function loadEntropyData() {
     document.getElementById("loading-text").style.display = "block";
     document.getElementById("load-btn").disabled = true;
 
-    fetch("/analysis/api/von_neumann_scan")
+    fetch(FormulaState.buildUrl("/analysis/api/von_neumann_scan"))
         .then(res => res.json())
         .then(data => {
             document.getElementById("loading-text").style.display = "none";
@@ -137,5 +137,11 @@ document.getElementById("vn-p").addEventListener("input", (e) => {
     document.getElementById("vn-p-text").innerText = p.toFixed(2);
     renderEntropyAt(p);
 });
+
+if (window.FormulaState) {
+    FormulaState.onChange(() => {
+        loadEntropyData();
+    });
+}
 </script>
 {% endblock %}

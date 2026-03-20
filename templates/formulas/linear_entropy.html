@@ -251,7 +251,7 @@ function renderHeatmaps(data) {
 }
 
 function loadSingleP(p) {
-  fetch(`/analysis/api/linear_entropy?p=${p}`)
+  fetch(FormulaState.buildUrl("/analysis/api/linear_entropy", { p }))
     .then(r => r.json())
     .then(d => {
       if (d.error) throw new Error(d.error);
@@ -268,7 +268,7 @@ function loadSingleP(p) {
 }
 
 function loadScan(p) {
-  fetch("/analysis/api/linear_entropy/scan?step=0.01")
+  fetch(FormulaState.buildUrl("/analysis/api/linear_entropy/scan", { step: 0.01 }))
     .then(r => r.json())
     .then(d => {
       if (d.error) throw new Error(d.error);
@@ -303,6 +303,14 @@ document.getElementById("p-slider").addEventListener("input", (e) => {
   }
   if (phaseData) renderPhasePortrait(phaseData, p);
 });
+
+if (window.FormulaState) {
+  FormulaState.onChange(() => {
+    const p = Number(document.getElementById("p-slider").value);
+    loadScan(p);
+    loadSingleP(p);
+  });
+}
 
 document.getElementById("load-phase-btn").addEventListener("click", () => {
   const p = Number(document.getElementById("p-slider").value);

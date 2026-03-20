@@ -13,6 +13,7 @@
                 <p class="main-subtitle">量子纠缠分析与可视化综合平台</p>
                 <span class="line-decor"></span>
             </div>
+            <p class="hero-intro">面向初学者与课程设计的可视化实验台：把公式变成图像，把结论变成直觉。</p>
         </div>
         <div class="scroll-hint">
             <span>SCROLL TO EXPLORE</span>
@@ -20,26 +21,76 @@
         </div>
     </section>
 
-    <section class="page-section">
+    <section class="page-section mission-page" style="--card-offset: 48px;">
         <div class="content-box">
             <div class="card">
                 <div class="card-title">平台定位 / MISSION</div>
                 <div class="result">
-                    <p>本平台致力于量子纠缠与非定域性的深度研究。通过集成多种数值计算算子与多维可视化引擎，将复杂的物理模型转化为直观的交互工具，辅助科研人员与学习者深入理解量子信息的核心机理。</p>
+                    <p>本平台的核心目标是“把抽象的量子概念变成可观察的图像”。我们围绕纠缠、可分性与非定域性等关键概念，构建一套可交互、可解释、可演示的公式可视化体系。</p>
+                    <p>每个页面都强调三件事：公式在回答什么问题、参数如何影响结论、图像应该怎么看。即使没有系统的量子物理背景，也能通过操作与解读逐步建立直觉。</p>
+                    <p>平台特别适合作为毕业设计、课程实验或科普展示的基础工程，用最小的门槛理解最核心的量子信息现象。</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="page-section">
+    <section class="page-section algorithms-page" style="--card-offset: 95px;">
         <div class="content-box">
             <div class="card">
                 <div class="card-title">功能阵列 / ALGORITHMS</div>
+                <div class="result" style="margin-bottom:16px;">
+                    <p>从单一判据到多判据对比，从 2D 曲线到 3D 曲面，本平台覆盖了“计算—可视化—解释”完整链路。</p>
+                </div>
                 <div class="feature-matrix">
-                    <div class="f-item"><h4>态结构分析</h4><p>Schmidt 分解 / Von Neumann 熵</p></div>
-                    <div class="f-item"><h4>非定域性</h4><p>CHSH 不等式 / PPT 判据</p></div>
-                    <div class="f-item"><h4>量子度量</h4><p>Fidelity / Concurrence</p></div>
-                    <div class="f-item"><h4>可视化</h4><p>3D 轨迹 / Bloch 球表征</p></div>
+                    <div class="f-item">
+                        <h4>态结构分析</h4>
+                        <p>
+                            <a class="algo-link" href="/analysis?formula=schmidt">Schmidt 分解</a> /
+                            <a class="algo-link" href="/analysis?formula=von_neumann">Von Neumann 熵</a> /
+                            <a class="algo-link" href="/analysis?formula=purity">纯度</a> /
+                            <a class="algo-link" href="/analysis?formula=linear_entropy">线性熵</a>
+                        </p>
+                    </div>
+                    <div class="f-item">
+                        <h4>非定域性判据</h4>
+                        <p>
+                            <a class="algo-link" href="/analysis?formula=chsh">CHSH 不等式</a> /
+                            <a class="algo-link" href="/analysis?formula=chsh_horodecki">Horodecki 上界</a> /
+                            <a class="algo-link" href="/analysis?formula=ppt">PPT 判据</a>
+                        </p>
+                    </div>
+                    <div class="f-item">
+                        <h4>纠缠度量</h4>
+                        <p>
+                            <a class="algo-link" href="/analysis?formula=concurrence">Concurrence</a> /
+                            <a class="algo-link" href="/analysis?formula=formation">EoF</a> /
+                            <a class="algo-link" href="/analysis?formula=geometric">Geometric Measure</a>
+                        </p>
+                    </div>
+                    <div class="f-item">
+                        <h4>相干性与保真度</h4>
+                        <p>
+                            <a class="algo-link" href="/analysis?formula=coherence">L1 Coherence</a> /
+                            <a class="algo-link" href="/analysis?formula=fidelity">State Fidelity</a> /
+                            <span class="algo-muted">目标态对比</span>
+                        </p>
+                    </div>
+                    <div class="f-item">
+                        <h4>判据对比热图</h4>
+                        <p>
+                            <a class="algo-link" href="/analysis?formula=criteria_compare">三判据同屏</a> /
+                            <a class="algo-link" href="/analysis?formula=criteria_compare">θ 切片</a> /
+                            <a class="algo-link" href="/analysis?formula=criteria_compare">一致性区域</a>
+                        </p>
+                    </div>
+                    <div class="f-item">
+                        <h4>高级可视化</h4>
+                        <p>
+                            <a class="algo-link" href="/analysis?formula=advanced_3d">3D 曲面</a> /
+                            <span class="algo-muted">动态投影</span> /
+                            <span class="algo-muted">交互式解释</span>
+                        </p>
+                    </div>
                 </div>
                 <div style="text-align: center; margin-top: 40px;">
                     <a href="/analysis" class="btn-primary" style="padding: 12px 35px; text-decoration: none;">进入计算实验中心</a>
@@ -48,12 +99,17 @@
         </div>
     </section>
 
-    <section class="page-section">
+    <section class="page-section vision-page" style="--card-offset: 60px;">
         <div class="content-box">
             <div class="card">
                 <div class="card-title">展望 / VISION</div>
                 <div class="result">
-                    <p>随着量子硬件的快速迭代，纠缠资源的精确量化将成为关键。未来平台将引入对多体纠缠及开放量子系统的全面支持。</p>
+                    <p>随着量子硬件与算法的快速迭代，纠缠资源的精确量化与可解释展示将越来越重要。</p>
+                    <p>下一阶段计划：</p>
+                    <p>1) 扩展到多体纠缠与开放量子系统的基础案例。<br>
+                       2) 增加“实验记录—参数回放—结果导出”的教学流程。<br>
+                       3) 引入更直观的对比视图，让不同判据的分歧区域一眼可见。</p>
+                    <p>我们的目标不是替代理论推导，而是提供一个“能看见、能理解、能复现实验逻辑”的可视化实验台。</p>
                 </div>
                 <div class="footer-simple" style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 11px; opacity: 0.5; color: var(--kq-purple);">
                     <span>© 2026 QUANTUM LAB</span>
@@ -403,9 +459,18 @@
     }
     .line-decor { width: 60px; height: 1px; background: #7b6cf6; opacity: 0.5; }
     .main-subtitle { font-size: 1.3rem; color: #f688ff; letter-spacing: 8px; margin: 0; }
+    .hero-intro {
+        margin-top: 16px;
+        font-size: 0.95rem;
+        color: rgba(220, 225, 255, 0.85);
+        letter-spacing: 2px;
+    }
 
     /* 3. 卡片与内容排版 (增加通透感) */
     .content-box { width: 100%; max-width: 850px; padding: 20px; }
+    .page-section .content-box {
+        transform: translateY(var(--card-offset, 0px));
+    }
     .card {
         background: rgba(15, 12, 35, 0.65);
         backdrop-filter: blur(12px);
@@ -443,6 +508,20 @@
     }
     .f-item h4 { color: #f688ff; margin: 0 0 8px 0; font-size: 1rem; }
     .f-item p { color: #999; font-size: 0.85rem; margin: 0; }
+    .algo-link {
+        color: #c8d6ff;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(123, 108, 246, 0.6);
+        padding-bottom: 1px;
+        transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .algo-link:hover {
+        color: #ffffff;
+        border-color: rgba(255, 120, 180, 0.85);
+    }
+    .algo-muted {
+        color: rgba(210, 210, 210, 0.45);
+    }
 
     /* 4. 滚动引导图标 */
     .scroll-hint { position: absolute; bottom: 40px; text-align: center; width: 100%; color: rgba(255,255,255,0.4); font-size: 11px; letter-spacing: 3px; }
@@ -583,10 +662,4 @@
 </style>
 
 {% endblock %}
-
-
-
-
-
-
 

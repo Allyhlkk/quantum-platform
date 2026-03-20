@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updateSingleP(p) {
-    fetch(`/analysis/api/concurrence?p=${p}`)
+    fetch(FormulaState.buildUrl("/analysis/api/concurrence", { p }))
       .then(res => res.json())
       .then(data => {
         document.getElementById("conc-info").innerText =
@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function loadScan() {
-    fetch(`/analysis/api/concurrence/scan`)
+    fetch(FormulaState.buildUrl("/analysis/api/concurrence/scan"))
       .then(res => res.json())
       .then(data => {
         drawCurve(data.p, data.concurrence);
@@ -182,6 +182,14 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSingleP(p);
     drawMarker(p);
   });
+
+  if (window.FormulaState) {
+    FormulaState.onChange(() => {
+      loadScan();
+      updateSingleP(Number(slider.value));
+      drawMarker(Number(slider.value));
+    });
+  }
 
   // init
   slider.value = 0.5;
