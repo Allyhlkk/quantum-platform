@@ -601,6 +601,8 @@
                     <li class="anal-item" onclick="loadAnalysis('/analysis/von_neumann')">Von Neumann 熵</li>
                     <li class="anal-item" onclick="loadAnalysis('/analysis/formula/linear_entropy')">Linear Entropy (S_L)</li>
                     <li class="anal-item" onclick="loadAnalysis('/analysis/formula/concurrence')">Concurrence</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/log_negativity')">Log-Negativity</li>
+                    <li class="anal-item" onclick="loadAnalysis('/analysis/formula/tangle')">Tangle (τ)</li>
                     <li class="anal-item" onclick="loadAnalysis('/analysis/formation')">形成纠缠度 (EoF)</li>
                     <li class="anal-item" onclick="loadAnalysis('/analysis/geometric')">Geometric Measure (几何度量)</li>
                     <li class="anal-item" onclick="loadAnalysis('/analysis/coherence')">Quantum Coherence (相干性)</li>
@@ -742,6 +744,16 @@
             <div class="q-title">Concurrence</div>
             <div class="q-desc">双量子位纠缠度量</div>
         </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/log_negativity')">
+            <span class="q-icon">??</span>
+            <div class="q-title">Log-Negativity</div>
+            <div class="q-desc">???????</div>
+        </div>
+        <div class="q-card" onclick="handleCardClick('/analysis/formula/tangle')">
+            <span class="q-icon">??</span>
+            <div class="q-title">Tangle (?)</div>
+            <div class="q-desc">Concurrence ?????</div>
+        </div>
         <div class="q-card" onclick="handleCardClick('/analysis/formula/linear_entropy')">
             <span class="q-icon">📉</span>
             <div class="q-title">Linear Entropy</div>
@@ -806,6 +818,8 @@ const formulaAliasMap = {
     "/analysis/formula/chsh_horodecki": ["horodecki", "chsh max", "s_max", "非定域"],
     "/analysis/formula/witness": ["witness", "见证者", "可观测量"],
     "/analysis/formula/concurrence": ["concurrence", "共生", "纠缠度"],
+    "/analysis/formula/log_negativity": ["lognegativity", "log-negativity", "log negativity", "对数负", "对数纠缠"],
+    "/analysis/formula/tangle": ["tangle", "tau", "τ", "concurrence2", "平方"],
     "/analysis/formula/linear_entropy": ["linear entropy", "线性熵", "sl", "混合度"],
     "/analysis/fidelity": ["fidelity", "保真度", "重合度"],
     "/analysis/purity": ["purity", "纯度", "trrho2"],
@@ -1488,18 +1502,18 @@ document.getElementById('analysis-frame').onload = function() {
         if (currentPath) syncFormulaSearchInput(currentPath);
         finishIframeLoadBar();
         syncIframeFxState();
-        // å¼ºåˆ¶ body æ˜¾ç¤ºçºµå‘æ»šåŠ¨æ¡ï¼Œé«˜åº¦è‡ªåŠ¨
+        // 强制 body 显示纵向滚动条，高度自适应
         frameDoc.body.style.overflowY = 'auto';
         frameDoc.body.style.height = 'auto';
         frameDoc.documentElement.style.overflowY = 'auto';
         if (pendingRestoreParams) {
             applyParamsToFrame(frameDoc, pendingRestoreParams);
             pendingRestoreParams = null;
-            setWorkspaceStatus("å·²æ¢å¤è®°å½•å‚æ•°ã€‚");
+            setWorkspaceStatus("已恢复记录参数。");
         }
     } catch (e) {
-        // å¦‚æžœè·¨åŸŸå¯èƒ½ä¼šæŠ¥é”™ï¼Œä½†åœ¨åŒä¸€ç³»ç»Ÿå†…é€šå¸¸æ²¡é—®é¢˜
-        console.warn("æ— æ³•æ“ä½œ Iframe æ ·å¼ï¼Œå¯èƒ½æ˜¯è·¨åŸŸé™åˆ¶");
+        // 如果跨域可能无法操作，但在同一系统内通常没问题
+        console.warn("无法操作 Iframe 样式，可能是跨域限制");
     }
 };
 
@@ -1522,9 +1536,6 @@ document.getElementById("report-modal").addEventListener("click", (e) => {
 
 </script>
 {% endblock %}
-
-
-
 
 
 

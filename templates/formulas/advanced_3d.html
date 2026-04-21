@@ -50,7 +50,7 @@
     z-index: 3;
     border: 1px solid rgba(123, 108, 246, 0.6);
     background: rgba(14, 12, 30, 0.7);
-    color: #e6efff;
+    color: #ffd166;
     padding: 6px 10px;
     border-radius: 999px;
     font-size: 12px;
@@ -59,12 +59,18 @@
     pointer-events: none;
     transition: opacity 0.2s ease;
   }
+  @keyframes projection-flare {
+    0% { color: #ffd166; border-color: rgba(255, 209, 102, 0.7); }
+    50% { color: #7ad1ff; border-color: rgba(122, 209, 255, 0.7); }
+    100% { color: #ff78b4; border-color: rgba(255, 120, 180, 0.7); }
+  }
   .projection-btn:hover {
     background: rgba(123, 108, 246, 0.35);
   }
   .projection-btn.show {
     opacity: 1;
     pointer-events: auto;
+    animation: projection-flare 3s ease-in-out infinite;
   }
 </style>
 <div class="formula-panel">
@@ -76,6 +82,21 @@
   <div class="formula-bound">
     <span>横轴 p: 纯态的抗噪权重 (0 到 1) <br> 纵轴 θ: 初始纯态的纠缠角度 (0 到 π/2，其中 π/4 为最大纠缠)</span>
   </div>
+</div>
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+  <details open>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+    <p style="color:#d7dbff; line-height:1.75;">3D 曲面展示指标在 (p, θ) 参数空间中的变化，用于观察“纠缠强度随噪声与初始纠缠角的全局结构”。</p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+    <p style="color:#d7dbff; line-height:1.75;">先选指标，再旋转/缩放曲面；悬停可读取具体 (p, θ) 数值。不同指标可快速对比趋势。</p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">阈值解释</summary>
+    <p style="color:#d7dbff; line-height:1.75;">PPT 指标小于 0 代表纠缠；Concurrence / Negativity / Geometric 接近 0 表示弱纠缠或可分；Fidelity 接近 1 表示更接近目标态。</p>
+  </details>
 </div>
 
 <div class="card analysis-panel">
@@ -137,8 +158,8 @@ function buildLayout(metricKey, config) {
     const base = {
         title: config.title,
         scene: {
-            xaxis: {title: 'p (çº¯æ€æƒé‡)'},
-            yaxis: {title: 'Î¸ (åˆå§‹çº ç¼ è§’åº¦)'},
+            xaxis: {title: 'p (纯态权重)'},
+            yaxis: {title: 'θ (初始纠缠角度)'},
             zaxis: {title: metricKey}
         },
         margin: {l: 0, r: 0, b: 0, t: 40}

@@ -7,6 +7,7 @@ from core.states.generalized import generalized_werner
 from core.states.factory import density_state, scan_state_generator
 from core.formulas.criteria.ppt import ppt_min_eigenvalue
 from core.formulas.measures.negativity import negativity
+from core.formulas.measures.log_negativity import log_negativity
 from core.formulas.measures.concurrence import concurrence
 from core.formulas.criteria.witness import witness_expectation
 from core.formulas.measures.purity import purity
@@ -15,6 +16,7 @@ from core.formulas.measures.formation import entanglement_of_formation
 from core.formulas.measures.fidelity import state_fidelity
 from core.formulas.measures.coherence import l1_coherence
 from core.formulas.measures.geometric import geometric_measure
+from core.formulas.measures.tangle import tangle
 from core.formulas.measures.linear_entropy import linear_entropy
 from core.formulas.criteria.ccnr import ccnr_trace_norm
 from core.formulas.criteria.reduction import reduction_min_eigenvalues
@@ -92,6 +94,30 @@ def analyze_concurrence(p: float, state_type: str = "werner", theta: float = Non
 def analyze_concurrence_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
     res = universal_1d_scan(scan_state_generator(state_type, theta), concurrence, 0.0, 1.0, step)
     return {"p": res["x"], "concurrence": res["y"]}
+
+def analyze_log_negativity(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
+    ln = log_negativity(rho)
+    return AnalysisResult(
+        values={"p": p, "log_negativity": ln, "entangled": ln > 0},
+        explanation="Log-Negativity > 0, entanglement detected." if ln > 0 else "Log-Negativity = 0, likely separable."
+    )
+
+def analyze_log_negativity_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), log_negativity, 0.0, 1.0, step)
+    return {"p": res["x"], "log_negativity": res["y"]}
+
+def analyze_tangle(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
+    rho = density_state(state_type, p=p, theta=theta)
+    t_val = tangle(rho)
+    return AnalysisResult(
+        values={"p": p, "tangle": t_val, "entangled": t_val > 0},
+        explanation="Tangle > 0, entanglement detected." if t_val > 0 else "Tangle = 0, likely separable."
+    )
+
+def analyze_tangle_scan(step: float = 0.01, state_type: str = "werner", theta: float = None):
+    res = universal_1d_scan(scan_state_generator(state_type, theta), tangle, 0.0, 1.0, step)
+    return {"p": res["x"], "tangle": res["y"]}
 
 def analyze_witness(p: float, state_type: str = "werner", theta: float = None) -> AnalysisResult:
     rho = density_state(state_type, p=p, theta=theta)

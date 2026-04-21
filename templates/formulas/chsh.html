@@ -85,6 +85,7 @@
     
 
     <canvas id="chsh-canvas" width="960" height="600" style="width:100%; height:auto; display:block;"></canvas>
+    <div class="std-tooltip" id="chsh-std-tooltip"></div>
 
     <p id="chsh-info"></p>
     <p id="chsh-explain"></p>
@@ -105,6 +106,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const H = canvas.height;
   const PAD = 50;
   const Y_MAX = 2.8;
+  const tooltip = document.getElementById("chsh-std-tooltip");
+  const tooltipHost = canvas.closest(".analysis-panel") || canvas.parentElement;
+
+  function showStdTooltip(text, clientX, clientY) {
+    if (!tooltip) return;
+    const hostRect = tooltipHost.getBoundingClientRect();
+    tooltip.innerHTML = text;
+    tooltip.style.left = `${clientX - hostRect.left + 12}px`;
+    tooltip.style.top = `${clientY - hostRect.top + 12}px`;
+    tooltip.classList.add("show");
+  }
+
+  function hideStdTooltip() {
+    if (!tooltip) return;
+    tooltip.classList.remove("show");
+  }
+
+  function hitStandardLine(x, y) {
+    const yBell = H - PAD - (2 / Y_MAX) * (H - 2 * PAD);
+    const tol = 6;
+    if (Math.abs(y - yBell) < tol && x >= PAD && x <= W - PAD) {
+      return `<div><strong>标准线：S = 2</strong><br>CHSH 经典界限<br><span style="color:#aee1ff;">来源：2018 npj-SM Supplementary, p3</span></div>`;
+    }
+    return null;
+  }
 
   function drawAxes() {
     ctx.clearRect(0, 0, W, H);
@@ -226,6 +252,16 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.FormulaState) {
     FormulaState.onChange(() => updateCHSH());
   }
+
+  canvas.addEventListener("mousemove", (ev) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = (ev.clientX - rect.left) * (W / rect.width);
+    const y = (ev.clientY - rect.top) * (H / rect.height);
+    const hit = hitStandardLine(x, y);
+    if (hit) showStdTooltip(hit, ev.clientX, ev.clientY);
+    else hideStdTooltip();
+  });
+  canvas.addEventListener("mouseleave", hideStdTooltip);
 
 });
 </script>

@@ -2,7 +2,9 @@ from flask import Blueprint, render_template, request, jsonify, abort, Response
 import numpy as np
 from werkzeug.exceptions import HTTPException
 from services.analysis_service import (analyze_schmidt, analyze_chsh, analyze_werner_scan, 
-                                       analyze_concurrence, analyze_concurrence_scan, 
+                                       analyze_concurrence, analyze_concurrence_scan,
+                                       analyze_log_negativity, analyze_log_negativity_scan,
+                                       analyze_tangle, analyze_tangle_scan,
                                        analyze_witness, analyze_witness_scan, 
                                        analyze_advanced_3d_scan, analyze_purity_scan,
                                        analyze_von_neumann_scan, analyze_formation_scan,
@@ -11,7 +13,8 @@ from services.analysis_service import (analyze_schmidt, analyze_chsh, analyze_we
                                        analyze_reduction, analyze_reduction_scan,
                                        analyze_criteria_compare_scan,
                                        analyze_horodecki, analyze_horodecki_scan, analyze_horodecki_map,
-                                       analyze_linear_entropy, analyze_linear_entropy_scan, analyze_linear_entropy_phase
+                                       analyze_linear_entropy, analyze_linear_entropy_scan, analyze_linear_entropy_phase,
+                                       analyze_werner
 )
 from core.formulas.measures.concurrence import concurrence
 from core.states.generalized import generalized_werner
@@ -28,13 +31,6 @@ from services.record_service import (
     update_record_note,
     export_records_csv,
 )
-
-from services.analysis_service import (
-    analyze_schmidt,
-    analyze_chsh,
-    analyze_werner,     # ⭐ 新增
-)
-
 
 analysis_bp = Blueprint("analysis", __name__, url_prefix="/analysis")
 
@@ -95,6 +91,10 @@ def formula_page(formula_id):
         elif formula_id == "concurrence":
             # Concurrence 页面只负责展示，JS 调 API
             return render_template("formulas/concurrence.html")
+        elif formula_id == "log_negativity":
+            return render_template("formulas/log_negativity.html")
+        elif formula_id == "tangle":
+            return render_template("formulas/tangle.html")
         elif formula_id == "ccnr":
             return render_template("formulas/ccnr.html")
         elif formula_id == "ppt":
@@ -223,6 +223,56 @@ def concurrence_scan_api():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     
+@analysis_bp.route("/api/log_negativity", methods=["GET"])
+def log_negativity_api():
+    """
+    /analysis/api/log_negativity?p=0.5
+    """
+    try:
+        p = float(request.args.get("p", 0.0))
+        state_type, theta = _state_args(default_type="werner")
+        result = analyze_log_negativity(p, state_type=state_type, theta=theta)
+        return jsonify({
+            **result.values,
+            "explanation": result.explanation
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@analysis_bp.route("/api/log_negativity/scan", methods=["GET"])
+def log_negativity_scan_api():
+    try:
+        state_type, theta = _state_args(default_type="werner")
+        data = analyze_log_negativity_scan(step=0.01, state_type=state_type, theta=theta)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@analysis_bp.route("/api/tangle", methods=["GET"])
+def tangle_api():
+    """
+    /analysis/api/tangle?p=0.5
+    """
+    try:
+        p = float(request.args.get("p", 0.0))
+        state_type, theta = _state_args(default_type="werner")
+        result = analyze_tangle(p, state_type=state_type, theta=theta)
+        return jsonify({
+            **result.values,
+            "explanation": result.explanation
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@analysis_bp.route("/api/tangle/scan", methods=["GET"])
+def tangle_scan_api():
+    try:
+        state_type, theta = _state_args(default_type="werner")
+        data = analyze_tangle_scan(step=0.01, state_type=state_type, theta=theta)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
 @analysis_bp.route('/api/concurrence_dynamic_scan')
 def concurrence_dynamic_scan_data():
     # 从前端获取滑块传来的 theta 值，默认为 pi/4

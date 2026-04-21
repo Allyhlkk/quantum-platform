@@ -198,7 +198,8 @@ function renderCurve(data, p) {
     y: [2, 2],
     mode: "lines",
     name: "CHSH bound = 2",
-    line: {color: "#ff78b4", dash: "dash"}
+    line: {color: "#ff78b4", dash: "dash"},
+    hovertemplate: "标准线: S=2<br>来源: 2018 npj-SM Supplementary, p3<extra></extra>"
   };
   const idx = Math.round(p * (data.p.length - 1));
   const marker = {

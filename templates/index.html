@@ -14,6 +14,12 @@
                 <span class="line-decor"></span>
             </div>
             <p class="hero-intro">面向初学者与课程设计的可视化实验台：把公式变成图像，把结论变成直觉。</p>
+            <div class="hero-note" style="max-width: 920px; margin: 18px auto 0; padding: 14px 18px; border: 1px solid rgba(123,108,246,.28); border-radius: 14px; background: linear-gradient(135deg, rgba(11,9,28,.86), rgba(18,13,39,.78)); box-shadow: inset 0 0 20px rgba(123,108,246,.08);">
+                <p style="margin:0; color:#d7dbff; line-height:1.85; font-size:15px;">
+                    这里更像一个“量子纠缠入门实验台”：你可以把它理解为一个把抽象概念转成参数、曲线和热图的工具。平台重点不是替代教材，而是帮助初学者先看懂几个最常见的问题：
+                    <strong style="color:#fff;">什么是纠缠、什么是纯态/混合态、哪些判据在判断可分性、参数变化会怎样影响结果</strong>。
+                </p>
+            </div>
         </div>
         <div class="scroll-hint">
             <span>SCROLL TO EXPLORE</span>
@@ -24,11 +30,18 @@
     <section class="page-section mission-page" style="--card-offset: 48px;">
         <div class="content-box">
             <div class="card">
-                <div class="card-title">平台定位 / MISSION</div>
+                <div class="card-title">定位 / MISSION</div>
                 <div class="result">
-                    <p>本平台的核心目标是“把抽象的量子概念变成可观察的图像”。我们围绕纠缠、可分性与非定域性等关键概念，构建一套可交互、可解释、可演示的公式可视化体系。</p>
-                    <p>每个页面都强调三件事：公式在回答什么问题、参数如何影响结论、图像应该怎么看。即使没有系统的量子物理背景，也能通过操作与解读逐步建立直觉。</p>
-                    <p>平台特别适合作为毕业设计、课程实验或科普展示的基础工程，用最小的门槛理解最核心的量子信息现象。</p>
+                    <p>本平台面向量子纠缠初学者，重点不是堆叠术语，而是把抽象的纠缠概念拆成可观察、可调参、可比较的图像。</p>
+                    <p>每个公式页都会围绕三个问题展开：<strong>这个公式在回答什么、参数变化会带来什么、图像应该怎么看</strong>。</p>
+                    <p>因此，你可以把这里理解成一个“量子纠缠入门实验台”——它把密度矩阵、保真度、纯度、熵、CHSH 判据等概念，转成曲线、热图和三维曲面。</p>
+                    <p>真正想建立直觉时，先看图，再看公式，再回到概念解释，通常比直接背推导更容易进入状态。</p>
+                    <div style="margin-top:14px; padding:12px 14px; border-left:3px solid #a98bff; background: rgba(123,108,246,.08); border-radius:10px;">
+                        <p style="margin:0; color:#e5e6ff; line-height:1.8;">
+                            <strong style="color:#fff;">纠缠的直观理解</strong>：量子纠缠不是两个粒子各自状态的简单相加，而是整体态和局域态之间存在不可分的关联。
+                            本平台通过 Werner 态、Bell 态和参数扫描，把这种“整体性”尽量转成肉眼可读的变化。
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -39,11 +52,12 @@
             <div class="card">
                 <div class="card-title">功能阵列 / ALGORITHMS</div>
                 <div class="result" style="margin-bottom:16px;">
-                    <p>从单一判据到多判据对比，从 2D 曲线到 3D 曲面，本平台覆盖了“计算—可视化—解释”完整链路。</p>
+                    <p>从单一判据到多判据对比，从二维扫描到三维曲面，本平台把“计算—可视化—解释”连成一条完整链路。</p>
+                    <p>这里的“算法”并不主要指机器学习，而是指围绕量子公式展开的分析流程：给定量子态和参数，计算结果、生成图像、同步解释。</p>
                 </div>
                 <div class="feature-matrix">
                     <div class="f-item">
-                        <h4>态结构分析</h4>
+                        <h4>基础量化</h4>
                         <p>
                             <a class="algo-link" href="/analysis?formula=schmidt">Schmidt 分解</a> /
                             <a class="algo-link" href="/analysis?formula=von_neumann">Von Neumann 熵</a> /
@@ -52,7 +66,7 @@
                         </p>
                     </div>
                     <div class="f-item">
-                        <h4>非定域性判据</h4>
+                        <h4>纠缠判据</h4>
                         <p>
                             <a class="algo-link" href="/analysis?formula=chsh">CHSH 不等式</a> /
                             <a class="algo-link" href="/analysis?formula=chsh_horodecki">Horodecki 上界</a> /
@@ -60,7 +74,7 @@
                         </p>
                     </div>
                     <div class="f-item">
-                        <h4>纠缠度量</h4>
+                        <h4>纠缠强度</h4>
                         <p>
                             <a class="algo-link" href="/analysis?formula=concurrence">Concurrence</a> /
                             <a class="algo-link" href="/analysis?formula=formation">EoF</a> /
@@ -68,18 +82,18 @@
                         </p>
                     </div>
                     <div class="f-item">
-                        <h4>相干性与保真度</h4>
+                        <h4>态对比</h4>
                         <p>
                             <a class="algo-link" href="/analysis?formula=coherence">L1 Coherence</a> /
                             <a class="algo-link" href="/analysis?formula=fidelity">State Fidelity</a> /
-                            <span class="algo-muted">目标态对比</span>
+                            <span class="algo-muted">目标态比较</span>
                         </p>
                     </div>
                     <div class="f-item">
-                        <h4>判据对比热图</h4>
+                        <h4>多判据联动</h4>
                         <p>
-                            <a class="algo-link" href="/analysis?formula=criteria_compare">三判据同屏</a> /
-                            <a class="algo-link" href="/analysis?formula=criteria_compare">θ 切片</a> /
+                            <a class="algo-link" href="/analysis?formula=criteria_compare">三判据对比</a> /
+                            <a class="algo-link" href="/analysis?formula=criteria_compare">theta 切片</a> /
                             <a class="algo-link" href="/analysis?formula=criteria_compare">一致性区域</a>
                         </p>
                     </div>
@@ -104,7 +118,8 @@
             <div class="card">
                 <div class="card-title">展望 / VISION</div>
                 <div class="result">
-                    <p>随着量子硬件与算法的快速迭代，纠缠资源的精确量化与可解释展示将越来越重要。</p>
+                    <p>随着量子硬件与算法的快速迭代，纠缠资源的精确量化与可解释展示会越来越重要。</p>
+                    <p>后续如果继续扩展，本平台还可以补入更明确的概念层说明，例如“密度矩阵是什么”“为什么纯态和混合态要分开看”“判据和可分性的关系是什么”。这样它不仅能展示公式结果，还能帮助初学者补齐最基础的量子信息认知。</p>
                     <p>下一阶段计划：</p>
                     <p>1) 扩展到多体纠缠与开放量子系统的基础案例。<br>
                        2) 增加“实验记录—参数回放—结果导出”的教学流程。<br>
@@ -119,7 +134,7 @@
         </div>
     </section>
 </div>
-<nav class="home-guide-rail" id="home-guide-rail" aria-label="首页板块导引">
+    <nav class="home-guide-rail" id="home-guide-rail" aria-label="首页板块导引">
     <button class="home-guide-tab" type="button" aria-expanded="false" aria-label="展开首页导引栏">
         <span class="home-guide-arrow">&#9664;</span>
     </button>
@@ -207,13 +222,13 @@
 
     function performScroll() {
         isScrolling = true;
-        // ä½¿ç”¨ CSS transform å®žçŽ°å¹³æ»‘ç§»åŠ¨
+        // 使用 CSS transform 实现平滑移动
         sections.forEach(sec => {
             sec.style.transform = `translateY(-${currentSection * 100}%)`;
         });
         syncGuideActive();
         
-        // é”å®šæ—¶é—´ä¸Ž CSS transition ä¸€è‡´ (1.2s)
+        // 锁定时间与 CSS transition 一致 (1.2s)
         setTimeout(() => { isScrolling = false; }, 1200);
     }
 
@@ -662,4 +677,3 @@
 </style>
 
 {% endblock %}
-

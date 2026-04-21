@@ -248,6 +248,27 @@
                 width: auto;
             }
         }
+
+        .std-tooltip {
+            position: absolute;
+            z-index: 30;
+            pointer-events: none;
+            background: rgba(12, 12, 26, 0.95);
+            border: 1px solid rgba(123, 108, 246, 0.55);
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 12px;
+            color: #f2f1ff;
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.38);
+            max-width: 280px;
+            opacity: 0;
+            transform: translate(8px, 8px);
+            transition: opacity 0.12s ease;
+        }
+
+        .std-tooltip.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body data-module="{{ module_name | default('formula') }}">

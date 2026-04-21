@@ -1,5 +1,6 @@
 import csv
 import io
+import os
 import json
 import sqlite3
 from datetime import datetime
@@ -7,7 +8,8 @@ from pathlib import Path
 from typing import Any
 
 
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "experiment_records.db"
+_DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "experiment_records.db"
+DB_PATH = Path(os.getenv("QUANTUM_PLATFORM_DB_PATH", str(_DEFAULT_DB_PATH)))
 
 
 def _ensure_db_dir() -> None:

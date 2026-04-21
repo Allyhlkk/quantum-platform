@@ -73,10 +73,30 @@
     color: #d7dbff;
   }
 
+  .meta-box.ml-result-text {
+    font-size: 15px;
+    line-height: 1.9;
+  }
+
   @media (max-width: 960px) {
     .metric-grid, .plot-grid { grid-template-columns: 1fr; }
   }
 </style>
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+  <details open>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+    <p style="color:#d7dbff; line-height:1.75;">该模块用经典机器学习模型（LogReg / SVM）尝试根据多个判据与度量特征，预测量子态是否纠缠。</p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+    <p style="color:#d7dbff; line-height:1.75;">看 Accuracy / F1 / ROC 曲线判断分类效果；决策边界图展示特征空间中的可分/纠缠划分。</p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">阈值解释</summary>
+    <p style="color:#d7dbff; line-height:1.75;">分类概率 &gt; 0.5 默认判为纠缠；混淆矩阵用于观察误判类型。</p>
+  </details>
+</div>
 
 <div class="formula-panel">
   <div class="formula-block">
@@ -153,7 +173,8 @@
     <div id="source-donut" class="plot-box"></div>
   </div>
 
-  <div id="meta-box" class="meta-box">Dataset meta will appear here.</div>
+  <div id="meta-box" class="meta-box ml-result-text">Dataset meta will appear here.</div>
+  <div id="ml-explain" class="meta-box ml-result-text" style="margin-top:8px;">模型解读将显示在这里。</div>
 </div>
 
 <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
@@ -385,6 +406,47 @@ function renderMetaDonuts(meta) {
   Plotly.newPlot("source-donut", [sourceTrace], sourceLayout, {displayModeBar: false, responsive: true});
 }
 
+function describeModel(name, m) {
+  const cm = m.confusion_matrix || [[0, 0], [0, 0]];
+  const tn = cm[0][0] || 0;
+  const fp = cm[0][1] || 0;
+  const fn = cm[1][0] || 0;
+  const tp = cm[1][1] || 0;
+  const bias = (fn > fp)
+    ? "偏保守（漏检较多）"
+    : (fp > fn) ? "偏激进（误报较多）" : "较均衡";
+  return {
+    name,
+    bias,
+    tn, fp, fn, tp
+  };
+}
+
+function renderExplainText(data) {
+  const logreg = data.logreg;
+  const svm = data.svm_rbf;
+  const meta = data.meta || {};
+  const best = (svm.f1 >= logreg.f1) ? "SVM-RBF" : "LogReg";
+  const diffF1 = Math.abs(svm.f1 - logreg.f1);
+  const classImbalance = meta.entangled_ratio !== undefined
+    ? Math.abs(meta.entangled_ratio - 0.5)
+    : 0;
+  const imbalanceNote = classImbalance >= 0.15
+    ? "当前数据类别不均衡，建议重点看 F1 与 Recall。"
+    : "当前数据类别相对均衡，Accuracy 参考价值较高。";
+  const logDesc = describeModel("LogReg", logreg);
+  const svmDesc = describeModel("SVM-RBF", svm);
+
+  const lines = [
+    `综合比较：本次更稳的是 <b>${best}</b>（F1差异=${fmt(diffF1)}）`,
+    `LogReg：${logDesc.bias}（TP=${logDesc.tp}, FN=${logDesc.fn}, FP=${logDesc.fp}）`,
+    `SVM：${svmDesc.bias}（TP=${svmDesc.tp}, FN=${svmDesc.fn}, FP=${svmDesc.fp}）`,
+    imbalanceNote,
+    "建议阅读：决策边界图可直观看到“纠缠/可分”在特征平面的划分方式。"
+  ];
+  document.getElementById("ml-explain").innerHTML = lines.join("<br>");
+}
+
 function runTrain() {
   const btn = document.getElementById("train-btn");
   const status = document.getElementById("train-status");
@@ -394,10 +456,21 @@ function runTrain() {
   btn.disabled = true;
   status.textContent = "Training in progress...";
 
-  fetch(`/analysis/api/ml/train?n_samples=${n}&seed=${seed}`)
-    .then(r => r.json())
+  const url = (window.FormulaState && typeof FormulaState.buildUrl === "function")
+    ? FormulaState.buildUrl("/analysis/api/ml/train", { n_samples: n, seed })
+    : `/analysis/api/ml/train?n_samples=${n}&seed=${seed}`;
+
+  fetch(url, { cache: "no-store" })
+    .then(async (r) => {
+      const data = await r.json().catch(() => null);
+      if (!r.ok) {
+        const msg = data && data.error ? data.error : `HTTP ${r.status}`;
+        throw new Error(msg);
+      }
+      if (data && data.error) throw new Error(data.error);
+      return data;
+    })
     .then(data => {
-      if (data.error) throw new Error(data.error);
 
       renderMetricsText("m-logreg", data.logreg);
       renderMetricsText("m-svm", data.svm_rbf);
@@ -409,6 +482,7 @@ function runTrain() {
       renderDecisionMap("decision-logreg", "Decision Map: Logistic Regression", data.decision_projection, "logreg_prob");
       renderDecisionMap("decision-svm", "Decision Map: SVM-RBF", data.decision_projection, "svm_prob");
       renderMetaDonuts(data.meta);
+      renderExplainText(data);
 
       const meta = data.meta;
       document.getElementById("meta-box").innerHTML = [
@@ -421,7 +495,8 @@ function runTrain() {
       status.textContent = "Training finished.";
     })
     .catch(err => {
-      status.textContent = `Failed: ${err.message}`;
+      const msg = err && err.message ? err.message : "network error";
+      status.textContent = `Failed: ${msg}`;
     })
     .finally(() => {
       btn.disabled = false;
