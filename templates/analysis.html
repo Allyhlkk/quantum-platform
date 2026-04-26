@@ -149,8 +149,7 @@
         user-select: none;
     }
 
-    body.projection-open #record-modal,
-    body.projection-open #report-modal {
+    body.projection-open #record-modal {
         display: none !important;
     }
 
@@ -388,58 +387,6 @@
         display: flex;
     }
 
-    .report-modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.62);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 2250;
-        padding: 16px;
-        box-sizing: border-box;
-    }
-
-    .report-modal.show {
-        display: flex;
-    }
-
-    .report-dialog {
-        width: min(1120px, 96vw);
-        max-height: 88vh;
-        overflow: auto;
-        background: rgba(11, 9, 26, 0.98);
-        border: 1px solid rgba(123, 108, 246, 0.34);
-        border-radius: 10px;
-        padding: 12px;
-    }
-
-    .report-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
-
-    .report-canvas-wrap {
-        width: 100%;
-        overflow: auto;
-        border: 1px solid rgba(123, 108, 246, 0.26);
-        border-radius: 8px;
-        background: rgba(8, 7, 18, 0.85);
-        padding: 10px;
-        box-sizing: border-box;
-    }
-
-    .report-canvas-wrap canvas {
-        width: 100%;
-        height: auto;
-        display: block;
-        border-radius: 6px;
-        background: #0a0718;
-    }
-
     .record-dialog {
         width: min(980px, 96vw);
         max-height: 82vh;
@@ -625,15 +572,19 @@
             </div>
         </div>
         <div class="workspace-tools">
-    <button type="button" onclick="saveCurrentRecord()">保存本次实验</button>
-    <button type="button" onclick="openRecordModal()">查看历史记录</button>
-    <button type="button" onclick="exportCurrentSnapshotJson()">导出当前JSON</button>
-    <button type="button" onclick="exportCurrentFigurePng()">导出当前图PNG</button>
-    <button type="button" onclick="exportRecordCsv()">导出记录CSV</button>
-    <button type="button" onclick="openCurrentReportCard()">生成当前报告卡</button>
-    <button type="button" id="fx-toggle-btn" onclick="toggleBackgroundFx()">动态背景：开</button>
-    <button type="button" id="cinematic-toggle-btn" onclick="toggleCinematicMode()">视觉模式：炫酷</button>
-</div>
+            <button type="button" onclick="saveCurrentRecord()">保存本次实验</button>
+            <button type="button" onclick="openRecordModal()">查看历史记录</button>
+            <button type="button" onclick="exportCurrentSnapshotJson()">导出当前JSON</button>
+            <label style="display:flex; align-items:center; gap:6px; margin:0;">
+                <span style="color:#aab1d8; font-size:13px;">导出目标</span>
+                <select id="export-target-select" style="min-width:220px; margin-top:0;"></select>
+            </label>
+            <button type="button" onclick="refreshExportTargets()">刷新目标</button>
+            <button type="button" onclick="exportCurrentFigurePng()">导出当前图PNG</button>
+            <button type="button" onclick="exportRecordCsv()">导出记录CSV</button>
+            <button type="button" id="fx-toggle-btn" onclick="toggleBackgroundFx()">动态背景：开</button>
+            <button type="button" id="cinematic-toggle-btn" onclick="toggleCinematicMode()">视觉模式：炫酷</button>
+        </div>
 <div class="iframe-loadbar" id="iframe-loadbar"><div id="iframe-loadbar-inner"></div></div>
 <div class="workspace-status" id="workspace-status">就绪。</div>
 <div id="analysis-frame-wrap" class="analysis-frame-wrap">
@@ -662,21 +613,7 @@
     </div>
 </div>
 
-<div id="report-modal" class="report-modal">
-    <div class="report-dialog">
-        <div class="report-head">
-            <h3 style="margin:0;">实验报告卡预览</h3>
-            <div class="record-actions">
-                <button type="button" onclick="exportReportCardPng()">导出报告卡 PNG</button>
-                <button type="button" onclick="exportReportCardPdf()">导出报告卡 PDF</button>
-                <button type="button" onclick="closeReportModal()">关闭</button>
-            </div>
-        </div>
-        <div class="report-canvas-wrap">
-            <canvas id="report-card-canvas" width="1200" height="760"></canvas>
-        </div>
-    </div>
-</div><div id="projection-overlay" class="projection-overlay">
+<div id="projection-overlay" class="projection-overlay">
     <div class="projection-shell">
         <div class="projection-hud">
             <div class="projection-actions">
@@ -745,14 +682,14 @@
             <div class="q-desc">双量子位纠缠度量</div>
         </div>
         <div class="q-card" onclick="handleCardClick('/analysis/formula/log_negativity')">
-            <span class="q-icon">??</span>
+            <span class="q-icon">LN</span>
             <div class="q-title">Log-Negativity</div>
-            <div class="q-desc">???????</div>
+            <div class="q-desc">基于部分转置的对数纠缠度量</div>
         </div>
         <div class="q-card" onclick="handleCardClick('/analysis/formula/tangle')">
-            <span class="q-icon">??</span>
-            <div class="q-title">Tangle (?)</div>
-            <div class="q-desc">Concurrence ?????</div>
+            <span class="q-icon">τ</span>
+            <div class="q-title">Tangle (τ)</div>
+            <div class="q-desc">由 Concurrence 平方得到的纠缠度量</div>
         </div>
         <div class="q-card" onclick="handleCardClick('/analysis/formula/linear_entropy')">
             <span class="q-icon">📉</span>
@@ -809,7 +746,7 @@ let formulaSearchResults = [];
 let formulaSearchActiveIndex = -1;
 let iframeLoadTimer = null;
 let iframeLoadProgress = 0;
-
+let exportTargetCache = [];
 const formulaAliasMap = {
     "/analysis/formula/ppt": ["ppt", "偏转置", "negativity", "部分转置", "min eigen"],
     "/analysis/formula/ccnr": ["ccnr", "realignment", "重排", "迹范数"],
@@ -920,6 +857,532 @@ function applyParamsToFrame(doc, params) {
         el.value = value;
         triggerElement(el);
     });
+}
+
+function isExportBlockedElement(el) {
+    if (!el) return true;
+    if (el.id === "bg-canvas") return true;
+    if (el.closest(".aurora-bg")) return true;
+    if (el.closest(".state-control-panel")) return true;
+    if (el.closest(".global-loadbar")) return true;
+    if (el.closest(".footer")) return true;
+    return false;
+}
+
+function getNearestHeadingText(el) {
+    const root = el.closest(".analysis-panel, .formula-panel, .plot-box, .horo-panel, section, article, .card") || el.parentElement;
+    if (!root) return "";
+    const candidates = [
+        ...root.querySelectorAll("h1,h2,h3,h4,h5,h6,.card-title,.title,.section-title")
+    ];
+    const filtered = candidates.filter(node => {
+        if (!node) return false;
+        if (node === el) return false;
+        return (node.textContent || "").trim().length > 0;
+    });
+    if (!filtered.length) return "";
+    return (filtered[0].textContent || "").trim().replace(/\s+/g, " ");
+}
+
+function inferExportLabel(el, index, countByLabel) {
+    const id = (el.id || "").trim();
+    const tag = el.tagName ? el.tagName.toLowerCase() : "figure";
+    const fixedLabels = {
+        "projection-plot": "投影曲面图",
+        "chsh-canvas": "CHSH 主曲线",
+        "ppt-canvas": "PPT / Negativity 曲线",
+        "ccnr-canvas": "CCNR / Realignment 曲线",
+        "reduction-canvas": "Reduction 判据曲线",
+        "conc-canvas": "Concurrence 曲线",
+        "logn-canvas": "Log-Negativity 曲线",
+        "tangle-canvas": "Tangle 曲线",
+        "witness-canvas": "Witness 曲线",
+        "ml_classifier": "机器学习结果",
+    };
+    let label = "";
+    if (id && fixedLabels[id]) {
+        label = fixedLabels[id];
+    } else if (id) {
+        label = id;
+    } else {
+        label = getNearestHeadingText(el) || `${tag}-${index + 1}`;
+    }
+
+    const dup = countByLabel.get(label) || 0;
+    countByLabel.set(label, dup + 1);
+    if (dup > 0) {
+        label = `${label} #${dup + 1}`;
+    }
+    return label;
+}
+
+function scanExportCandidates(doc) {
+    if (!doc) return [];
+    const selectors = [
+        ".analysis-panel .js-plotly-plot",
+        ".analysis-panel .plotly-graph-div",
+        ".analysis-panel canvas",
+        ".analysis-panel img",
+        ".formula-panel .js-plotly-plot",
+        ".formula-panel .plotly-graph-div",
+        ".formula-panel canvas",
+        ".formula-panel img",
+        ".plot-box .js-plotly-plot",
+        ".plot-box .plotly-graph-div",
+        ".plot-box canvas",
+        ".plot-box img",
+        "#projection-stage .js-plotly-plot",
+        "#projection-stage .plotly-graph-div",
+        "#projection-stage canvas",
+        "#projection-stage img",
+    ];
+    const seen = new Set();
+    const out = [];
+    const push = el => {
+        if (!el || seen.has(el) || isExportBlockedElement(el)) return;
+        const rect = el.getBoundingClientRect();
+        const view = el.ownerDocument?.defaultView || window;
+        const style = view.getComputedStyle ? view.getComputedStyle(el) : null;
+        const area = Math.max(0, rect.width) * Math.max(0, rect.height);
+        if (!style || area < 2500) return;
+        if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return;
+        seen.add(el);
+        out.push(el);
+    };
+    selectors.forEach(sel => doc.querySelectorAll(sel).forEach(push));
+    doc.querySelectorAll(".js-plotly-plot, .plotly-graph-div, canvas, img").forEach(push);
+    return out;
+}
+
+function collectExportTargets(doc) {
+    const candidates = scanExportCandidates(doc);
+    const countByLabel = new Map();
+    return candidates.map((el, index) => {
+        const label = inferExportLabel(el, index, countByLabel);
+        const id = (el.id || "").trim();
+        const key = id ? `id:${id}` : `order:${index}`;
+        return {
+            key,
+            label,
+            kind: el.tagName ? el.tagName.toLowerCase() : "figure",
+            order: index,
+        };
+    });
+}
+
+function refreshExportTargets() {
+    const select = document.getElementById("export-target-select");
+    if (!select) return;
+    const {doc} = getFrameContext();
+    const targets = collectExportTargets(doc);
+    exportTargetCache = targets;
+
+    const prev = select.value || "auto";
+    select.innerHTML = "";
+    const optAuto = document.createElement("option");
+    optAuto.value = "auto";
+    optAuto.textContent = "自动主图";
+    select.appendChild(optAuto);
+
+    targets.forEach(target => {
+        const opt = document.createElement("option");
+        opt.value = target.key;
+        opt.textContent = `${target.label}`;
+        select.appendChild(opt);
+    });
+
+    if (prev && (prev === "auto" || targets.some(t => t.key === prev))) {
+        select.value = prev;
+    } else {
+        select.value = "auto";
+    }
+}
+
+function resolveExportTargetElement(targetKey) {
+    const {doc} = getFrameContext();
+    if (!doc) return null;
+    const key = String(targetKey || "auto");
+    if (key === "auto") {
+        return getCurrentFigureElement();
+    }
+    if (key.startsWith("id:")) {
+        const id = key.slice(3);
+        const el = doc.getElementById(id);
+        return el ? {el, kind: el.tagName.toLowerCase(), key} : null;
+    }
+    if (key.startsWith("order:")) {
+        const index = Number(key.slice(6));
+        const list = scanExportCandidates(doc);
+        const el = list[index];
+        return el ? {el, kind: el.tagName.toLowerCase(), key} : null;
+    }
+    return getCurrentFigureElement();
+}
+
+function getCurrentPageMeta() {
+    const {doc, url} = getFrameContext();
+    return {
+        page_url: url || "",
+        page_title: collectFrameTitle(doc),
+        params: collectFrameParams(doc),
+        explanation: collectFrameExplanation(doc),
+    };
+}
+
+function currentRecordPayload(extra = {}) {
+    const meta = getCurrentPageMeta();
+    return {
+        ...meta,
+        ...extra,
+    };
+}
+
+function openRecordModal() {
+    const modal = document.getElementById("record-modal");
+    if (!modal) return;
+    modal.classList.add("show");
+    refreshRecordList();
+}
+
+function closeRecordModal() {
+    const modal = document.getElementById("record-modal");
+    if (!modal) return;
+    modal.classList.remove("show");
+}
+
+function renderRecordList(records) {
+    const wrap = document.getElementById("record-list-wrap");
+    if (!wrap) return;
+    recordCache = Array.isArray(records) ? records : [];
+
+    if (!recordCache.length) {
+        wrap.innerHTML = '<div style="padding:8px 2px;color:#aab1d8;">暂无记录。</div>';
+        return;
+    }
+
+    const rows = recordCache.map(rec => {
+        const paramsText = escHtml(JSON.stringify(rec.params || {}, null, 2));
+        const title = escHtml(rec.page_title || "");
+        const url = escHtml(rec.page_url || "");
+        const note = escHtml(rec.note || "");
+        const exp = escHtml(rec.explanation || "");
+        const time = escHtml(rec.created_at || "");
+        return `
+            <tr>
+                <td>${rec.id}</td>
+                <td>
+                    <div style="font-weight:600;color:#fff;">${title || "(未命名页面)"}</div>
+                    <div style="font-size:12px;color:#aab1d8;word-break:break-all;">${url}</div>
+                </td>
+                <td style="max-width:260px;">
+                    <details>
+                        <summary style="cursor:pointer;color:#ffd166;">查看参数</summary>
+                        <pre style="white-space:pre-wrap;margin:6px 0 0;color:#d7dbff;">${paramsText}</pre>
+                    </details>
+                    <div style="margin-top:6px;font-size:12px;color:#9fd3ff;">${exp || ""}</div>
+                </td>
+                <td style="max-width:180px;">
+                    <textarea data-note-id="${rec.id}" style="width:100%;min-height:70px;box-sizing:border-box;margin-top:0;">${note}</textarea>
+                </td>
+                <td style="white-space:nowrap;">
+                    <div class="record-actions">
+                        <button type="button" data-action="restore" data-id="${rec.id}">恢复</button>
+                        <button type="button" data-action="save-note" data-id="${rec.id}">保存备注</button>
+                        <button type="button" data-action="delete" data-id="${rec.id}">删除</button>
+                    </div>
+                    <div style="margin-top:6px;font-size:12px;color:#aab1d8;">${time}</div>
+                </td>
+            </tr>
+        `;
+    }).join("");
+
+    wrap.innerHTML = `
+        <table class="record-table">
+            <thead>
+                <tr>
+                    <th style="width:52px;">ID</th>
+                    <th>页面</th>
+                    <th>参数 / 解释</th>
+                    <th style="width:220px;">备注</th>
+                    <th style="width:220px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+    `;
+
+    wrap.querySelectorAll('button[data-action="restore"]').forEach(btn => {
+        btn.addEventListener("click", () => restoreRecord(Number(btn.dataset.id)));
+    });
+    wrap.querySelectorAll('button[data-action="save-note"]').forEach(btn => {
+        btn.addEventListener("click", () => saveRecordNote(Number(btn.dataset.id)));
+    });
+    wrap.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+        btn.addEventListener("click", () => deleteRecord(Number(btn.dataset.id)));
+    });
+}
+
+async function refreshRecordList() {
+    const wrap = document.getElementById("record-list-wrap");
+    if (!wrap) return;
+    const q = (document.getElementById("record-search-input")?.value || "").trim();
+    wrap.innerHTML = '<div style="padding:8px 2px;color:#aab1d8;">加载中...</div>';
+
+    try {
+        const url = `/analysis/api/records?limit=200&q=${encodeURIComponent(q)}`;
+        const res = await fetch(url, {headers: {"Accept": "application/json"}});
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        renderRecordList(data.records || []);
+        setWorkspaceStatus(`已加载 ${recordCache.length} 条记录。`);
+    } catch (err) {
+        wrap.innerHTML = `<div style="padding:8px 2px;color:#ff9ea6;">${escHtml(err.message || String(err))}</div>`;
+    }
+}
+
+function clearRecordSearch() {
+    const input = document.getElementById("record-search-input");
+    if (input) input.value = "";
+    refreshRecordList();
+}
+
+async function saveCurrentRecord() {
+    try {
+        const payload = currentRecordPayload();
+        if (!payload.page_url) {
+            setWorkspaceStatus("当前页面还未就绪，无法保存记录。", true);
+            return;
+        }
+        const res = await fetch("/analysis/api/records", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                page_url: payload.page_url,
+                page_title: payload.page_title,
+                params: payload.params,
+                explanation: payload.explanation,
+                note: "",
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        setWorkspaceStatus(`已保存记录：${data.record?.page_title || payload.page_title || payload.page_url}`);
+        if (document.getElementById("record-modal")?.classList.contains("show")) {
+            refreshRecordList();
+        }
+    } catch (err) {
+        setWorkspaceStatus(`保存失败：${err.message || String(err)}`, true);
+    }
+}
+
+async function deleteRecord(recordId) {
+    if (!recordId) return;
+    if (!window.confirm(`确定删除记录 #${recordId} 吗？`)) return;
+    try {
+        const res = await fetch(`/analysis/api/records/${recordId}`, {method: "DELETE"});
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        setWorkspaceStatus(`已删除记录 #${recordId}`);
+        refreshRecordList();
+    } catch (err) {
+        setWorkspaceStatus(`删除失败：${err.message || String(err)}`, true);
+    }
+}
+
+async function clearAllRecords() {
+    if (!window.confirm("确定清空全部实验记录吗？此操作不可恢复。")) return;
+    try {
+        const res = await fetch("/analysis/api/records/clear", {method: "POST"});
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        setWorkspaceStatus(`已清空 ${data.deleted_count || 0} 条记录。`);
+        refreshRecordList();
+    } catch (err) {
+        setWorkspaceStatus(`清空失败：${err.message || String(err)}`, true);
+    }
+}
+
+async function saveRecordNote(recordId) {
+    const rec = recordCache.find(x => Number(x.id) === Number(recordId));
+    if (!rec) return;
+    const current = rec.note || "";
+    const note = window.prompt("请输入备注", current);
+    if (note === null) return;
+    try {
+        const res = await fetch(`/analysis/api/records/${recordId}/note`, {
+            method: "PATCH",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({note}),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        setWorkspaceStatus(`已更新记录 #${recordId} 的备注。`);
+        refreshRecordList();
+    } catch (err) {
+        setWorkspaceStatus(`备注更新失败：${err.message || String(err)}`, true);
+    }
+}
+
+function restoreRecord(recordId) {
+    const rec = recordCache.find(x => Number(x.id) === Number(recordId));
+    if (!rec) return;
+    const currentPath = getFrameContext().url;
+    if (rec.page_url && currentPath === rec.page_url) {
+        const {doc} = getFrameContext();
+        if (doc) {
+            applyParamsToFrame(doc, rec.params || {});
+        }
+    } else {
+        pendingRestoreParams = rec.params || {};
+        if (rec.page_url) {
+            loadAnalysis(rec.page_url);
+        }
+    }
+    switchView("classic");
+    closeRecordModal();
+    setWorkspaceStatus(`已恢复记录 #${recordId}。`);
+}
+
+function exportRecordCsv() {
+    const url = "/analysis/api/records/export.csv?limit=1000";
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "experiment_records.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+function exportCurrentSnapshotJson() {
+    try {
+        const payload = currentRecordPayload({
+            exported_at: new Date().toISOString(),
+            current_view: document.getElementById("btn-carousel")?.classList.contains("active") ? "carousel" : "classic",
+        });
+        const fileName = `snapshot-${makeTimestamp()}.json`;
+        downloadBlob(JSON.stringify(payload, null, 2), fileName, "application/json;charset=utf-8");
+        setWorkspaceStatus(`已导出 ${fileName}`);
+    } catch (err) {
+        setWorkspaceStatus(`导出 JSON 失败：${err.message || String(err)}`, true);
+    }
+}
+
+function getCurrentFigureElement() {
+    if (projectionState.active) {
+        const el = document.getElementById("projection-plot");
+        return el ? {el, kind: "plotly"} : null;
+    }
+    const {doc} = getFrameContext();
+    if (!doc) return null;
+
+    const preferredSelectors = [
+        ".analysis-panel .js-plotly-plot",
+        ".analysis-panel .plotly-graph-div",
+        ".analysis-panel canvas",
+        ".analysis-panel img",
+        ".formula-panel .js-plotly-plot",
+        ".formula-panel .plotly-graph-div",
+        ".formula-panel canvas",
+        ".formula-panel img",
+        ".plot-box .js-plotly-plot",
+        ".plot-box .plotly-graph-div",
+        ".plot-box canvas",
+        ".plot-box img",
+        "#projection-stage .js-plotly-plot",
+        "#projection-stage .plotly-graph-div",
+        "#projection-stage canvas",
+        "#projection-stage img",
+    ];
+
+    const seen = new Set();
+    const candidates = [];
+    const push = el => {
+        if (!el || seen.has(el)) return;
+        seen.add(el);
+        candidates.push(el);
+    };
+
+    preferredSelectors.forEach(sel => doc.querySelectorAll(sel).forEach(push));
+    doc.querySelectorAll(".js-plotly-plot, .plotly-graph-div, canvas, svg, img").forEach(push);
+
+    const scoreCandidate = el => {
+        const view = el.ownerDocument?.defaultView || window;
+        const style = view.getComputedStyle ? view.getComputedStyle(el) : null;
+        const rect = el.getBoundingClientRect();
+        const area = Math.max(0, rect.width) * Math.max(0, rect.height);
+        if (!style || area < 2500) return null;
+        if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return null;
+        if (el.id === "bg-canvas") return null;
+        if (el.closest(".aurora-bg")) return null;
+        if (el.closest(".state-control-panel")) return null;
+        let score = area;
+        const tag = el.tagName.toLowerCase();
+        const id = el.id || "";
+        if (tag === "canvas") score += 1200;
+        if (tag === "svg") score += 1000;
+        if (tag === "img") score += 900;
+        if (tag.includes("div")) score += 700;
+        if (id.endsWith("-canvas")) score += 1200;
+        if (/^plot-/i.test(id) || id === "projection-plot") score += 1400;
+        if (el.closest(".analysis-panel")) score += 1800;
+        if (el.closest(".formula-panel")) score += 1500;
+        if (el.closest(".plot-box")) score += 1400;
+        if (el.closest("#projection-stage")) score += 2000;
+        if (style.position === "fixed") score -= 2000;
+        if (style.position === "absolute") score += 100;
+        return {el, kind: tag, score};
+    };
+
+    const ranked = candidates
+        .map(scoreCandidate)
+        .filter(Boolean)
+        .sort((a, b) => b.score - a.score);
+
+    return ranked.length ? ranked[0] : null;
+}
+
+async function exportCurrentFigurePng() {
+    try {
+        const select = document.getElementById("export-target-select");
+        const selectedKey = select ? select.value : "auto";
+        let target = resolveExportTargetElement(selectedKey);
+        if (!target) {
+            refreshExportTargets();
+            target = resolveExportTargetElement(selectedKey);
+        }
+        if (!target) {
+            setWorkspaceStatus("当前页面没有可导出的图像。", true);
+            return;
+        }
+        let dataUrl = "";
+        const win = projectionState.active ? window : getFrameContext().win;
+        const PlotlyLib = win && win.Plotly ? win.Plotly : window.Plotly;
+        if (target.kind === "canvas" && typeof target.el.toDataURL === "function") {
+            dataUrl = target.el.toDataURL("image/png");
+        } else if (PlotlyLib && typeof PlotlyLib.toImage === "function") {
+            dataUrl = await PlotlyLib.toImage(target.el, {
+                format: "png",
+                width: 1400,
+                height: 900,
+                scale: 2
+            });
+        } else if (target.kind === "img" && target.el.src) {
+            dataUrl = target.el.src;
+        } else {
+            setWorkspaceStatus("当前图像不支持导出。", true);
+            return;
+        }
+        const fileName = `figure-${makeTimestamp()}.png`;
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setWorkspaceStatus(`已导出 ${fileName}`);
+        } catch (err) {
+        setWorkspaceStatus(`导出 PNG 失败：${err.message || String(err)}`, true);
+    }
 }
 
 function downloadBlob(content, fileName, mime = "application/octet-stream") {
@@ -1501,6 +1964,9 @@ document.getElementById('analysis-frame').onload = function() {
         const currentPath = this.src ? new URL(this.src).pathname : "";
         if (currentPath) syncFormulaSearchInput(currentPath);
         finishIframeLoadBar();
+        refreshExportTargets();
+        window.setTimeout(refreshExportTargets, 450);
+        window.setTimeout(refreshExportTargets, 1200);
         syncIframeFxState();
         // 强制 body 显示纵向滚动条，高度自适应
         frameDoc.body.style.overflowY = 'auto';
@@ -1528,10 +1994,6 @@ if (initialTarget) {
 }
 document.getElementById("record-modal").addEventListener("click", (e) => {
     if (e.target.id === "record-modal") closeRecordModal();
-});
-
-document.getElementById("report-modal").addEventListener("click", (e) => {
-    if (e.target.id === "report-modal") closeReportModal();
 });
 
 </script>
