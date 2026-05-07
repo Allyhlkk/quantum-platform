@@ -329,11 +329,40 @@ function loadScanAndRender(p) {
       if (d.error) throw new Error(d.error);
       scanData = d;
       renderCurve(d, p);
+    })
+    .catch(async (e) => {
+      console.error("Horodecki scan load failed:", e);
+      const curveBox = document.getElementById("plot-curve");
+      const interpretBox = document.getElementById("chsh-interpret");
+      if (interpretBox) {
+        interpretBox.innerText = `当前解释：扫描曲线加载失败（${e.message}），已尝试回退到单点结果。`;
+      }
+
+      try {
+        const fallback = await fetch(FormulaState.buildUrl("/analysis/api/chsh_horodecki", { p }))
+          .then(r => r.json());
+        if (fallback && !fallback.error && Number.isFinite(Number(fallback.chsh_max))) {
+          renderCurve({
+            p: [Number(p)],
+            chsh_max: [Number(fallback.chsh_max)]
+          }, p);
+          return;
+        }
+      } catch (err) {
+        console.error("Horodecki single-point fallback failed:", err);
+      }
+
+      if (curveBox) {
+        curveBox.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ffb4c8;padding:16px;text-align:center;">
+          CHSH 曲线加载失败，请检查 /api/chsh_horodecki/scan 接口和浏览器控制台。
+        </div>`;
+      }
     });
 }
 
 function loadMapAndRender() {
   stopThetaPlay();
+  const p = Number(document.getElementById("p-slider").value);
   const resolution = Number(document.getElementById("resolution").value || 30);
   fetch(`/analysis/api/chsh_horodecki/map?resolution=${resolution}`)
     .then(r => r.json())
@@ -345,6 +374,8 @@ function loadMapAndRender() {
       slider.max = String(Math.max(0, d.y.length - 1));
       slider.value = "0";
       renderThetaSlice(0);
+      loadScanAndRender(p);
+      loadSingleP(p);
     })
     .catch(e => alert(`Load map failed: ${e.message}`));
 }

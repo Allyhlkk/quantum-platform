@@ -350,14 +350,14 @@ function updateKPIs(data) {
 }
 
 function renderAllViews(data) {
-  makeHeatmap("hm-ppt", data.x, data.y, data.ppt_margin, "PPT Margin", "RdBu", "margin");
-  makeHeatmap("hm-ccnr", data.x, data.y, data.ccnr_margin, "CCNR Margin", "Viridis", "margin");
-  makeHeatmap("hm-reduction", data.x, data.y, data.reduction_margin, "Reduction Margin", "Plasma", "margin");
+  makeHeatmap("hm-ppt", data.x, data.y, data.ppt_margin, "PPT Margin", "Tealrose", "margin");
+  makeHeatmap("hm-ccnr", data.x, data.y, data.ccnr_margin, "CCNR Margin", "Picnic", "margin");
+  makeHeatmap("hm-reduction", data.x, data.y, data.reduction_margin, "Reduction Margin", "Viridis", "margin");
   makeHeatmap("hm-consensus", data.x, data.y, data.consensus, "Consensus (0..3)", "Cividis", "votes");
 
-  makeSurface("sf-ppt", data.x, data.y, data.ppt_margin, "PPT Surface", "RdBu", "margin");
-  makeSurface("sf-ccnr", data.x, data.y, data.ccnr_margin, "CCNR Surface", "Viridis", "margin");
-  makeSurface("sf-reduction", data.x, data.y, data.reduction_margin, "Reduction Surface", "Plasma", "margin");
+  makeSurface("sf-ppt", data.x, data.y, data.ppt_margin, "PPT Surface", "Tealrose", "margin");
+  makeSurface("sf-ccnr", data.x, data.y, data.ccnr_margin, "CCNR Surface", "Picnic", "margin");
+  makeSurface("sf-reduction", data.x, data.y, data.reduction_margin, "Reduction Surface", "Viridis", "margin");
   makeSurface("sf-consensus", data.x, data.y, data.consensus, "Consensus Surface", "Cividis", "votes");
 }
 
