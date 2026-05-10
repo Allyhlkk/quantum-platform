@@ -1,0 +1,268 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}CHSH Analysis{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    $$S = |E(a,b) + E(a,b') + E(a',b) - E(a',b')|$$
+
+    $$E(a,b) = \langle \psi^- | (\vec{a}\cdot\vec{\sigma})
+    \otimes (\vec{b}\cdot\vec{\sigma}) | \psi^- \rangle$$
+  </div>
+
+  <div class="formula-bound">
+    <span>$$Classical\ bound:\ S \le 2$$</span>
+    <span class="sep">$$|$$</span>
+    <span>$$Quantum\ bound:\ S \le 2\sqrt{2}$$</span>
+  </div>
+
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+      <details open>
+        <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+        <p style="color:#d7dbff; line-height:1.75;">CHSH 不等式回答：这个量子态的相关性是否能被经典局域隐变量模型解释。若 S_max > 2，则出现非定域违背。</p>
+      </details>
+      <details>
+        <summary style="cursor:pointer; color:#ffd166; font-weight:600;">来历与用途</summary>
+        <p style="color:#d7dbff; line-height:1.75;">CHSH 是 Bell 不等式中最常用的版本，常用于展示“量子相关性超出经典上限”的核心现象。</p>
+      </details>
+      <details>
+        <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+        <p style="color:#d7dbff; line-height:1.75;">先看虚线阈值 S=2；再看粉色曲线峰值是否越线；最后看下方实时文字判断“当前参数是否违背”。</p>
+      </details>    </div>
+</div>
+
+<div class="card analysis-panel">
+
+  <h2>CHSH Nonlocality Analysis</h2>
+
+  <p id="chsh-guide" style="margin:8px 0 0 0; color:#aee1ff;">当前解释：等待分析开始。</p>
+
+
+  <!-- ========= 阶段 1：初始化 ========= -->
+  <div id="init-panel">
+    <label>
+      a
+      <input type="number" step="0.01" id="init-a" value="0">
+    </label>
+    <label>
+      a′
+      <input type="number" step="0.01" id="init-a_p" value="1.57">
+    </label>
+    <label>
+      b
+      <input type="number" step="0.01" id="init-b" value="0.78">
+    </label>
+
+    <button type="button" onclick="startAnalysis()">
+      ▶ Start Analysis
+    </button>
+  </div>
+
+  <!-- ========= 阶段 2：实验台 ========= -->
+  <div id="analysis-panel" style="display:none;">
+
+    <div class="controls">
+      <label>
+        a
+        <input type="range" min="0" max="6.28" step="0.01" id="a">
+        <span id="a_val"></span>
+      </label>
+
+      <label>
+        a′
+        <input type="range" min="0" max="6.28" step="0.01" id="a_p">
+        <span id="a_p_val"></span>
+      </label>
+
+      <label>
+        b
+        <input type="range" min="0" max="6.28" step="0.01" id="b">
+        <span id="b_val"></span>
+      </label>
+    </div>
+
+    
+
+    <canvas id="chsh-canvas" width="960" height="600" style="width:100%; height:auto; display:block;"></canvas>
+    <div class="std-tooltip" id="chsh-std-tooltip"></div>
+
+    <p id="chsh-info"></p>
+    <p id="chsh-explain"></p>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const sliders = ["a", "a_p", "b"];
+  const canvas = document.getElementById("chsh-canvas");
+  const ctx = canvas.getContext("2d");
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const PAD = 50;
+  const Y_MAX = 2.8;
+  const tooltip = document.getElementById("chsh-std-tooltip");
+  const tooltipHost = canvas.closest(".analysis-panel") || canvas.parentElement;
+
+  function showStdTooltip(text, clientX, clientY) {
+    if (!tooltip) return;
+    const hostRect = tooltipHost.getBoundingClientRect();
+    tooltip.innerHTML = text;
+    tooltip.style.left = `${clientX - hostRect.left + 12}px`;
+    tooltip.style.top = `${clientY - hostRect.top + 12}px`;
+    tooltip.classList.add("show");
+  }
+
+  function hideStdTooltip() {
+    if (!tooltip) return;
+    tooltip.classList.remove("show");
+  }
+
+  function hitStandardLine(x, y) {
+    const yBell = H - PAD - (2 / Y_MAX) * (H - 2 * PAD);
+    const tol = 6;
+    if (Math.abs(y - yBell) < tol && x >= PAD && x <= W - PAD) {
+      return `<div><strong>标准线：S = 2</strong><br>CHSH 经典界限<br><span style="color:#aee1ff;">来源：2018 npj-SM Supplementary, p3</span></div>`;
+    }
+    return null;
+  }
+
+  function drawAxes() {
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = "#aaa";
+    ctx.lineWidth = 1;
+    ctx.font = "12px sans-serif";
+    ctx.fillStyle = "#aaa";
+
+    ctx.beginPath();
+    ctx.moveTo(PAD, PAD);
+    ctx.lineTo(PAD, H - PAD);
+    ctx.lineTo(W - PAD, H - PAD);
+    ctx.stroke();
+
+    const xTicks = [
+      { v: 0, label: "0" },
+      { v: Math.PI / 2, label: "π/2" },
+      { v: Math.PI, label: "π" },
+      { v: 3 * Math.PI / 2, label: "3π/2" },
+      { v: 2 * Math.PI, label: "2π" },
+    ];
+
+    xTicks.forEach(t => {
+      const x = PAD + (t.v / (2 * Math.PI)) * (W - 2 * PAD);
+      ctx.beginPath();
+      ctx.moveTo(x, H - PAD);
+      ctx.lineTo(x, H - PAD + 6);
+      ctx.stroke();
+      ctx.fillText(t.label, x - 8, H - PAD + 20);
+    });
+
+    const yTicks = [0, 1, 2, 2.5];
+    yTicks.forEach(v => {
+      const y = H - PAD - (v / Y_MAX) * (H - 2 * PAD);
+      ctx.beginPath();
+      ctx.moveTo(PAD - 6, y);
+      ctx.lineTo(PAD, y);
+      ctx.stroke();
+      ctx.fillText(v.toString(), PAD - 28, y + 4);
+    });
+
+    const yBell = H - PAD - (2 / Y_MAX) * (H - 2 * PAD);
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(PAD, yBell);
+    ctx.lineTo(W - PAD, yBell);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText("S = 2", PAD + 5, yBell - 6);
+
+    ctx.fillText("b′ (rad)", W / 2 - 20, H - 10);
+    ctx.save();
+    ctx.translate(12, H / 2 + 20);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("CHSH S value", 0, 0);
+    ctx.restore();
+  }
+
+  function drawCurve(theta, S_vals) {
+    drawAxes();
+    ctx.strokeStyle = "#ff78b4";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    S_vals.forEach((S, i) => {
+      const x = PAD + (theta[i] / (2 * Math.PI)) * (W - 2 * PAD);
+      const y = H - PAD - (S / Y_MAX) * (H - 2 * PAD);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+
+    ctx.stroke();
+  }
+
+  window.startAnalysis = function () {
+    sliders.forEach(id => {
+      document.getElementById(id).value =
+        document.getElementById("init-" + id).value;
+      document.getElementById(id)
+        .addEventListener("input", updateCHSH);
+    });
+
+    document.getElementById("init-panel").style.display = "none";
+    document.getElementById("analysis-panel").style.display = "block";
+
+    drawAxes();
+    updateCHSH();
+  };
+
+  function updateCHSH() {
+    sliders.forEach(id => {
+      document.getElementById(id + "_val").innerText =
+        Number(document.getElementById(id).value).toFixed(2);
+    });
+
+    const a = document.getElementById("a").value;
+    const a_p = document.getElementById("a_p").value;
+    const b = document.getElementById("b").value;
+
+    // ⭐⭐⭐ 关键修正：统一走 analysis API
+    fetch(FormulaState.buildUrl("/analysis/api/chsh", { a, a_p, b }))
+      .then(res => res.json())
+      .then(data => {
+        drawCurve(data.theta, data.S_vals);
+
+        document.getElementById("chsh-info").innerText =
+          `S_max = ${data.S_max} (${data.violation ? "Violation of Bell inequality" : "No violation"})`;
+
+        document.getElementById("chsh-explain").innerText =
+          data.explanation;
+
+        document.getElementById("chsh-guide").innerText =
+          data.violation
+            ? `当前解释：S_max=${Number(data.S_max).toFixed(3)} > 2，当前设置下出现 CHSH 违背（非定域性信号）。`
+            : `当前解释：S_max=${Number(data.S_max).toFixed(3)} ≤ 2，当前设置下未观察到 CHSH 违背。`;
+      });
+  }
+
+  if (window.FormulaState) {
+    FormulaState.onChange(() => updateCHSH());
+  }
+
+  canvas.addEventListener("mousemove", (ev) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = (ev.clientX - rect.left) * (W / rect.width);
+    const y = (ev.clientY - rect.top) * (H / rect.height);
+    const hit = hitStandardLine(x, y);
+    if (hit) showStdTooltip(hit, ev.clientX, ev.clientY);
+    else hideStdTooltip();
+  });
+  canvas.addEventListener("mouseleave", hideStdTooltip);
+
+});
+</script>
+{% endblock %}

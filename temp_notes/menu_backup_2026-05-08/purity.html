@@ -1,0 +1,196 @@
+{% extends "formulas/formulas_base.html" %}
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>Purity (纯度)</h3>
+    $$\text{Purity}(\rho) = \text{Tr}(\rho^2)$$
+  </div>
+  <div class="formula-bound">
+    <span>衡量量子态“纯/混合”程度：越接近 1 越纯，越小表示越混合。</span>
+  </div>
+
+  <div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+    <details open>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+      <p style="color:#d7dbff; line-height:1.75;">Purity=Tr(ρ²) 用来判断量子态有多“纯”，数值越接近 1 越纯，越小代表越混合。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">用途</summary>
+      <p style="color:#d7dbff; line-height:1.75;">常用于评估噪声与退相干的影响，也常与熵、纠缠度量配合使用。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+      <p style="color:#d7dbff; line-height:1.75;">曲线越高越接近纯态；随参数下降意味着混合程度增加。</p>
+    </details>
+  </div>
+</div>
+
+<div class="card analysis-panel">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <h2 id="purity-title">纯度扫描 (1D Scan)</h2>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <label for="purity-p" style="margin:0;">p</label>
+      <input id="purity-p" type="range" min="0" max="1" step="0.01" value="0.50" style="width:220px; margin-top:0;">
+      <span id="purity-p-text">0.50</span>
+      <button id="load-btn" onclick="loadPurityData()" style="padding: 8px 16px; cursor: pointer;">
+        ▶ 生成纯度曲线
+      </button>
+    </div>
+  </div>
+  <p id="purity-guide" style="margin:8px 0 0 0; color:#aee1ff;">当前解释：等待生成曲线...</p>
+  <p id="loading-text" style="display:none; color: #666; margin-top: 10px;">计算中，请稍候...</p>
+  <div id="plot-purity-1d" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+<script>
+let purityData = null;
+let purityRefreshTimer = null;
+
+const PURITY_TEXT = {
+  title: "纯度扫描 (1D Scan)",
+  waiting: "当前解释：等待生成曲线...",
+  loading: "当前解释：加载中...",
+  fail: "当前解释：加载失败",
+  levelHigh: "接近纯态",
+  levelMid: "中等混合",
+  levelLow: "明显混合",
+};
+
+function getStateLabel() {
+  if (!window.FormulaState || typeof FormulaState.getType !== "function") return "Werner态";
+  const type = FormulaState.getType();
+  const theta = (typeof FormulaState.getTheta === "function") ? FormulaState.getTheta() : null;
+  if (type === "werner") return "Werner态";
+  if (type === "generalized") return `广义Werner态 (θ=${Number(theta).toFixed(2)})`;
+  if (type === "bell") return "Bell态 |Ψ->";
+  if (type === "pure_theta") return `纯态 |ψ(θ)> (θ=${Number(theta).toFixed(2)})`;
+  return type;
+}
+
+function updateTitle() {
+  const el = document.getElementById("purity-title");
+  if (el) el.innerText = `${PURITY_TEXT.title} · 当前态：${getStateLabel()}`;
+}
+
+function nearestIndex(arr, value) {
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    const d = Math.abs(arr[i] - value);
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  }
+  return best;
+}
+
+function renderPurityAt(p) {
+  if (!purityData) return;
+  const idx = nearestIndex(purityData.p, p);
+  const x = purityData.p[idx];
+  const y = purityData.purity[idx];
+
+  const trace = {
+    x: purityData.p,
+    y: purityData.purity,
+    type: "scatter",
+    mode: "lines",
+    line: {color: "#2CA02C", width: 3},
+    name: "Purity"
+  };
+  const markerTrace = {
+    x: [x],
+    y: [y],
+    type: "scatter",
+    mode: "markers",
+    marker: {size: 10, color: "#ffd166"},
+    name: "当前 p"
+  };
+  const layout = {
+    title: "Purity vs Noise Parameter (p)",
+    xaxis: {title: "p"},
+    yaxis: {title: "Purity", range: [0.2, 1.05]},
+    margin: {l: 50, r: 20, b: 50, t: 50}
+  };
+  Plotly.react("plot-purity-1d", [trace, markerTrace], layout, {responsive: true, displayModeBar: false});
+
+  let level = PURITY_TEXT.levelMid;
+  if (y >= 0.9) level = PURITY_TEXT.levelHigh;
+  else if (y <= 0.4) level = PURITY_TEXT.levelLow;
+  const guide = document.getElementById("purity-guide");
+  if (guide) guide.innerText = `当前解释：p=${x.toFixed(2)} 时 Purity=${y.toFixed(3)}（判定：${level}）。`;
+}
+
+function loadPurityData() {
+  updateTitle();
+  const loadingEl = document.getElementById("loading-text");
+  const loadBtn = document.getElementById("load-btn");
+  const guide = document.getElementById("purity-guide");
+  if (guide) guide.innerText = PURITY_TEXT.loading;
+  if (loadingEl) loadingEl.style.display = "block";
+  if (loadBtn) loadBtn.disabled = true;
+
+  let url = (window.FormulaState && typeof FormulaState.buildUrl === "function")
+    ? FormulaState.buildUrl("/analysis/api/purity_scan")
+    : "/analysis/api/purity_scan";
+  const ts = `__ts=${Date.now()}`;
+  url += (url.includes("?") ? "&" : "?") + ts;
+
+  fetch(url)
+    .then(res => res.text().then(text => ({ok: res.ok, status: res.status, text})))
+    .then(({ok, status, text}) => {
+      if (!ok) throw new Error(`HTTP ${status}: ${text.slice(0, 160)}`);
+      try { return JSON.parse(text); }
+      catch (e) { throw new Error(`非JSON响应: ${text.slice(0, 160)}`); }
+    })
+    .then(data => {
+      purityData = data;
+      renderPurityAt(Number(document.getElementById("purity-p").value));
+    })
+    .catch(err => {
+      console.error(err);
+      if (guide) guide.innerText = `${PURITY_TEXT.fail}（${err.message || err}）`;
+    })
+    .finally(() => {
+      if (loadingEl) loadingEl.style.display = "none";
+      if (loadBtn) loadBtn.disabled = false;
+    });
+}
+
+function triggerPurityGenerate() {
+  const btn = document.getElementById("load-btn");
+  if (btn && !btn.disabled) {
+    btn.click();
+    return true;
+  }
+  loadPurityData();
+  return false;
+}
+
+document.getElementById("purity-p").addEventListener("input", (e) => {
+  const p = Number(e.target.value);
+  document.getElementById("purity-p-text").innerText = p.toFixed(2);
+  renderPurityAt(p);
+});
+
+window.FormulaAutoLoad = triggerPurityGenerate;
+
+function schedulePurityRefresh() {
+  if (purityRefreshTimer) window.clearTimeout(purityRefreshTimer);
+  purityRefreshTimer = window.setTimeout(triggerPurityGenerate, 80);
+}
+
+function bindStateControls() {
+  const typeSel = document.getElementById("state-type");
+  const thetaInput = document.getElementById("state-theta");
+  if (typeSel) typeSel.addEventListener("change", schedulePurityRefresh);
+  if (thetaInput) thetaInput.addEventListener("input", schedulePurityRefresh);
+}
+
+bindStateControls();
+updateTitle();
+loadPurityData();
+</script>
+{% endblock %}

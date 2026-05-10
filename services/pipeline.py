@@ -20,9 +20,8 @@ def _state_key(state) -> tuple:
 def _quantize(x: float, step: float) -> float:
     return round(float(x) / step) * step
 
-# ==========================================================
+
 # 通用一维扫描器 (1D Scanner)
-# ==========================================================
 def universal_1d_scan(state_generator, metric_fn, p_start=0.0, p_end=1.0, step=0.01) -> dict:
     p_list = []
     val_list = []
@@ -37,9 +36,7 @@ def universal_1d_scan(state_generator, metric_fn, p_start=0.0, p_end=1.0, step=0
         
     return {"x": p_list, "y": val_list}
 
-# ==========================================================
-# 通用二维扫描器 (2D Scanner for 3D Surface)
-# ==========================================================
+# 通用二维扫描器 (2D Scanner/3D Surface)
 def universal_2d_scan(state_generator, metric_fn, p1_range, p2_range) -> dict:
     """
     生成用于 3D 曲面图或热力图的二维网格数据

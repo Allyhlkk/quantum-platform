@@ -1,0 +1,157 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}新手导览{% endblock %}
+
+{% block content %}
+<style>
+  .guide-wrap {
+    border: 1px solid rgba(123, 108, 246, 0.35);
+    border-radius: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(18, 15, 39, 0.92), rgba(10, 9, 24, 0.92));
+    box-shadow: inset 0 0 26px rgba(123, 108, 246, 0.12), 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .guide-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .guide-card {
+    border: 1px solid rgba(123, 108, 246, 0.28);
+    border-radius: 10px;
+    padding: 12px;
+    background: rgba(8, 7, 20, 0.82);
+  }
+
+  .guide-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #fff;
+  }
+
+  .guide-card p,
+  .guide-card li {
+    color: #d7dbff;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .guide-card ul {
+    margin: 6px 0 0 0;
+    padding-left: 18px;
+  }
+
+  .route-line {
+    margin-top: 10px;
+    color: #9cb0ff;
+    font-size: 13px;
+    border-top: 1px dashed rgba(123, 108, 246, 0.4);
+    padding-top: 10px;
+  }
+
+  .guide-callout {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-left: 3px solid #a98bff;
+    background: rgba(123, 108, 246, 0.08);
+    border-radius: 10px;
+  }
+
+  @media (max-width: 960px) {
+    .guide-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>平台新手导览（建议先看）</h3>
+    <p style="margin: 6px 0 0 0;">
+      本页面帮助你快速理解：量子纠缠是什么、这些公式在回答什么问题、图该怎么读、操作顺序是什么。
+    </p>
+  </div>
+</div>
+
+<div class="card analysis-panel guide-wrap">
+  <div class="guide-grid">
+    <div class="guide-card">
+      <h4>1. 先搞清几个基础概念</h4>
+      <ul>
+        <li>量子态：描述系统状态的数学对象，常见表示是态矢或密度矩阵。</li>
+        <li>纯态 / 混合态：纯态更“干净”，混合态通常带有噪声或不确定性。</li>
+        <li>量子纠缠：整体状态不能简单拆成各个子系统独立状态的乘积。</li>
+        <li>本平台会把这些概念落到参数、曲线和热图上，便于初学者建立直觉。</li>
+      </ul>
+    </div>
+    <div class="guide-card">
+      <h4>2. 图像通用读法</h4>
+      <ul>
+        <li>曲线图：先看阈值线，再看曲线是否跨线。</li>
+        <li>热图：先看颜色条，再看边界线（通常是 0、1 或 2）。</li>
+        <li>相图：看轨迹落在哪个区域，观察状态随参数如何移动。</li>
+        <li>如果你暂时不熟悉推导，可以先把图当成“公式的可视化解释”。</li>
+      </ul>
+    </div>
+    <div class="guide-card">
+      <h4>3. 推荐操作顺序</h4>
+      <ul>
+        <li>Schmidt 分解：先建立状态结构的直觉。</li>
+        <li>Purity / Entropy：理解“纯”和“混”的变化。</li>
+        <li>PPT / CCNR / Reduction / Witness：判断“会不会纠缠”。</li>
+        <li>CHSH Horodecki、Concurrence、Formation：看更完整的量化指标。</li>
+      </ul>
+    </div>
+    <div class="guide-card">
+      <h4>4. 常见误解提示</h4>
+      <ul>
+        <li>“不违反 CHSH” 不等于“一定可分”。</li>
+        <li>“混合度高” 不一定“纠缠强”。</li>
+        <li>单一判据不足，最好结合多个判据一起看。</li>
+        <li>如果暂时没看懂全部推导，先按图形趋势理解也完全可以。</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="guide-card" style="margin-top: 12px;">
+    <h4>5. 这个平台到底是做什么的</h4>
+    <p>
+      它不是完整的量子信息课程，也不是通用量子计算仿真器，而是一个面向初学者的
+      <strong>量子纠缠公式分析与可视化平台</strong>。
+      你可以把它理解成一个“把教材里的公式变成图”的地方：通过参数滑条、实时解释、曲线和热图，
+      让抽象结论先变得可见，再逐步变得可理解。
+    </p>
+    <p>
+      如果你刚开始接触量子纠缠，建议先从首页和本页了解概念，再去看具体公式页面。
+      先把“公式在说什么”建立起来，再回头看推导，会轻松很多。
+    </p>
+    <div class="guide-callout">
+      <p style="margin: 0; line-height: 1.8;">
+        <strong style="color:#fff;">一句话理解量子纠缠：</strong>
+        两个或多个量子系统出现一种“整体状态不能简单拆成各自状态”的相关性。
+        本平台的作用，就是把这种相关性放进具体公式里，让你能从图像上看到它怎么变化。
+      </p>
+    </div>
+  </div>
+
+  <div class="route-line">
+    快速入口：
+    <code>/analysis/formula/chsh_horodecki</code>、
+    <code>/analysis/formula/linear_entropy</code>、
+    <code>/analysis/criteria_compare</code>、
+    <code>/analysis/formula/fidelity</code>
+  </div>
+</div>
+
+<div class="card analysis-panel" style="margin-top: 16px;">
+  <div class="guide-card" style="border: 0; background: transparent; padding: 0;">
+    <h4 style="margin-top:0;">6. 如果你还是刚入门</h4>
+    <p style="margin-bottom: 0;">
+      你可以先把“量子纠缠”理解成一种整体相关性，再把“保真度、纯度、熵、判据”理解成不同的观察角度。
+      本平台的作用，就是把这些角度放到同一个界面里，帮你在看图的过程中慢慢建立概念。
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-﻿{% extends "formulas/formulas_base.html" %}
+{% extends "formulas/formulas_base.html" %}
 {% block title %}ML Entanglement Classifier{% endblock %}
 
 {% block content %}
@@ -442,6 +442,7 @@ function renderExplainText(data) {
     `LogReg：${logDesc.bias}（TP=${logDesc.tp}, FN=${logDesc.fn}, FP=${logDesc.fp}）`,
     `SVM：${svmDesc.bias}（TP=${svmDesc.tp}, FN=${svmDesc.fn}, FP=${svmDesc.fp}）`,
     imbalanceNote,
+    "当前特征集已去除与标签规则直接重合的项，以减少信息泄漏。",
     "建议阅读：决策边界图可直观看到“纠缠/可分”在特征平面的划分方式。"
   ];
   document.getElementById("ml-explain").innerHTML = lines.join("<br>");

@@ -1,0 +1,83 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}Schmidt Decomposition{% endblock %}
+
+{% block content %}
+
+<!-- ========= 公式展示区 ========= -->
+<div class="formula-panel">
+  <div class="formula-block">
+    $$|\psi\rangle
+      = a|00\rangle + b|01\rangle + c|10\rangle + d|11\rangle$$
+
+    $$|\psi\rangle
+      = \sum_i \lambda_i\, |u_i\rangle_A \otimes |v_i\rangle_B$$
+
+    $$\text{Schmidt rank} = \#\{\lambda_i \neq 0\}$$
+  </div>
+</div>
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+  <details open>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+    <p style="color:#d7dbff; line-height:1.75;">Schmidt 分解回答的是：这个双比特纯态是否纠缠。核心看 Schmidt rank：rank=1 通常是可分态，rank≥2 说明存在纠缠。</p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">来历与用途</summary>
+    <p style="color:#d7dbff; line-height:1.75;">它是双体纯态最基础的结构工具，几乎所有入门教材都会先讲。优点是判断规则直接、结果容易解释。</p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么操作与读结果</summary>
+    <p style="color:#d7dbff; line-height:1.75;">先输入 a,b,c,d 并点击 Compute。结果区会给出 rank 和文本解释；你可以修改参数观察 rank 何时从 1 跳到 2。</p>
+  </details>
+</div>
+
+<!-- ========= 输入卡片 ========= -->
+<div class="card analysis-panel">
+  <h2>Schmidt Decomposition (Two-Qubit Pure State)</h2>
+
+  <form method="post" class="controls">
+    <label>a <input name="a" required></label>
+    <label>b <input name="b" required></label>
+    <label>c <input name="c" required></label>
+    <label>d <input name="d" required></label>
+
+    <button type="submit">▶ Compute</button>
+  </form>
+
+</div>
+
+{% if error %}
+<div class="card error">{{ error }}</div>
+{% endif %}
+
+{% if result %}
+<div class="card analysis-panel">
+  <h2>Result</h2>
+
+  <p>
+    Schmidt rank:
+    <b>{{ result.values.rank }}</b>
+  </p>
+
+  {% if result.values.coeffs %}
+  <p>
+    Schmidt coefficients:
+    {{ result.values.coeffs }}
+  </p>
+  {% endif %}
+
+  <p class="analysis-conclusion">
+    {{ result.explanation }}
+  </p>
+  <p style="color:#aee1ff; margin-top:8px;">
+    当前解释：
+    {% if result.values.rank >= 2 %}
+      rank={{ result.values.rank }}，该纯态包含纠缠。
+    {% else %}
+      rank={{ result.values.rank }}，该纯态更接近可分结构。
+    {% endif %}
+  </p>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -2,8 +2,10 @@ import numpy as np
 
 from core.formulas.criteria.ccnr import ccnr_trace_norm
 from core.formulas.criteria.ppt import ppt_min_eigenvalue
+from core.formulas.criteria.reduction import reduction_min_eigenvalues
 from core.formulas.criteria.witness import witness_expectation
 from core.formulas.measures.concurrence import concurrence
+from core.formulas.measures.negativity import negativity
 from core.formulas.measures.purity import purity
 from core.formulas.measures.von_neumann import von_neumann_entropy
 from core.states.generalized import generalized_werner
@@ -18,10 +20,13 @@ def _random_density_matrix(dim: int, rng: np.random.Generator) -> np.ndarray:
 
 def _extract_features(rho: np.ndarray) -> list:
     ccnr_norm = ccnr_trace_norm(rho)
+    red_a, red_b = reduction_min_eigenvalues(rho)
+    red_min = min(red_a, red_b)
+    neg = negativity(rho)
     pur = purity(rho)
     vn = von_neumann_entropy(rho)
     wit = witness_expectation(rho)
-    return [ccnr_norm, pur, vn, wit]
+    return [ccnr_norm, red_min, neg, pur, vn, wit]
 
 
 def _make_dataset(n_samples: int, seed: int):
@@ -29,6 +34,8 @@ def _make_dataset(n_samples: int, seed: int):
 
     feature_names = [
         "ccnr_trace_norm",
+        "reduction_min_eig",
+        "negativity",
         "purity",
         "von_neumann",
         "witness_expectation",
@@ -229,7 +236,7 @@ def run_ml_benchmark(n_samples: int = 1200, seed: int = 42) -> dict:
         y_points=y_test,
         feature_names=feature_names,
         x_idx=0,  # ccnr_trace_norm
-        y_idx=1,  # purity
+        y_idx=2,  # negativity
         grid_n=80,
     )
 

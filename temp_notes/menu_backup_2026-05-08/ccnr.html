@@ -1,0 +1,248 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}CCNR Criterion{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    $$R(\rho)_{ik,jl} = \rho_{ij,kl}$$
+    $$\|R(\rho)\|_1 > 1 \Rightarrow \text{entangled}$$
+    $$\|R(\rho)\|_1 \le 1 \Rightarrow \text{CCNR-separable (sufficient test)}$$
+  </div>
+
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+    <details open>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+      <p style="color:#d7dbff; line-height:1.75;">CCNR 判据通过计算重排矩阵的迹范数来判断纠缠：||R(ρ)||_1 > 1 时，说明检测到纠缠。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">来历与用途</summary>
+      <p style="color:#d7dbff; line-height:1.75;">CCNR 是 PPT 之外的重要可分性判据，常用于交叉验证。它能补充 PPT 的视角，适合教学中做多判据对比。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+      <p style="color:#d7dbff; line-height:1.75;">看 y=1 阈值线：曲线在 1 以上表示检测到纠缠。红色竖线表示当前 p 的位置，配合实时解释理解当前点结论。</p>
+    </details>  </div>
+</div>
+
+<div class="card analysis-panel">
+  <h2>CCNR Analysis (Werner State)</h2>
+
+  <p id="ccnr-guide" style="margin:8px 0 0 0; color:#aee1ff;">当前解释：等待数据...</p>
+
+
+  <div class="controls">
+    <label>
+      p
+      <input type="range" min="0" max="1" step="0.01" id="p">
+      <span id="p_val"></span>
+    </label>
+  </div>
+
+  
+
+  <canvas id="ccnr-canvas" width="960" height="600" style="width:100%; height:auto; display:block;"></canvas>
+  <div class="std-tooltip" id="ccnr-std-tooltip"></div>
+
+  <p id="ccnr-info"></p>
+  <p id="ccnr-explain"></p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const canvas = document.getElementById("ccnr-canvas");
+  const ctx = canvas.getContext("2d");
+
+  const W = canvas.width;
+  const H = canvas.height;
+  const PAD = 50;
+  const SCALE_Y = 140;
+
+  const slider = document.getElementById("p");
+  const pVal = document.getElementById("p_val");
+  const tooltip = document.getElementById("ccnr-std-tooltip");
+  const tooltipHost = canvas.closest(".analysis-panel") || canvas.parentElement;
+
+  let globalP = [];
+  let globalNorm = [];
+
+  function showStdTooltip(text, clientX, clientY) {
+    if (!tooltip) return;
+    const hostRect = tooltipHost.getBoundingClientRect();
+    tooltip.innerHTML = text;
+    tooltip.style.left = `${clientX - hostRect.left + 12}px`;
+    tooltip.style.top = `${clientY - hostRect.top + 12}px`;
+    tooltip.classList.add("show");
+  }
+
+  function hideStdTooltip() {
+    if (!tooltip) return;
+    tooltip.classList.remove("show");
+  }
+
+  function hitStandardLine(x, y) {
+    const hits = [];
+    const xCrit = PAD + (1 / 3) * (W - 2 * PAD);
+    const y1 = H / 2;
+    const tol = 6;
+    if (Math.abs(x - xCrit) < tol && y >= PAD && y <= H - PAD) {
+      hits.push({
+        dist: Math.abs(x - xCrit),
+        text: `<div><strong>标准线：p = 1/3</strong><br>Werner态纠缠阈值<br><span style="color:#aee1ff;">来源：2018 PRL Experimental ML of Quantum States, p8</span></div>`
+      });
+    }
+    if (Math.abs(y - y1) < tol && x >= PAD && x <= W - PAD) {
+      hits.push({
+        dist: Math.abs(y - y1),
+        text: `<div><strong>判据边界：||R||₁ = 1</strong><br>CCNR 判据阈值<br><span style="color:#aee1ff;">来源：2009 RMP（CCNR/realignment criterion）</span></div>`
+      });
+    }
+    if (!hits.length) return null;
+    hits.sort((a, b) => a.dist - b.dist);
+    return hits[0].text;
+  }
+
+  function drawAxes() {
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = "#aaa";
+    ctx.fillStyle = "#aaa";
+    ctx.lineWidth = 1;
+    ctx.font = "12px sans-serif";
+
+    ctx.beginPath();
+    ctx.moveTo(PAD, PAD);
+    ctx.lineTo(PAD, H - PAD);
+    ctx.lineTo(W - PAD, H - PAD);
+    ctx.stroke();
+
+    // y = 1 threshold
+    const y1 = H / 2;
+    ctx.setLineDash([6, 6]);
+    ctx.beginPath();
+    ctx.moveTo(PAD, y1);
+    ctx.lineTo(W - PAD, y1);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText("||R||_1 = 1", PAD + 5, y1 - 6);
+
+    // Werner reference threshold p = 1/3
+    const pCrit = 1 / 3;
+    const xCrit = PAD + pCrit * (W - 2 * PAD);
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(xCrit, PAD);
+    ctx.lineTo(xCrit, H - PAD);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText("p = 1/3", xCrit - 18, PAD - 8);
+
+    ctx.fillText("p", W / 2, H - 10);
+    ctx.save();
+    ctx.translate(12, H / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText("||R(rho)||_1", 0, 0);
+    ctx.restore();
+  }
+
+  function drawCurve(pList, normList) {
+    drawAxes();
+
+    globalP = pList;
+    globalNorm = normList;
+
+    ctx.strokeStyle = "#64b5f6";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    pList.forEach((p, i) => {
+      const x = PAD + p * (W - 2 * PAD);
+      const y = H / 2 - (normList[i] - 1.0) * SCALE_Y;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+
+    ctx.stroke();
+  }
+
+  function drawMarker(p) {
+    if (!globalP.length) return;
+
+    drawCurve(globalP, globalNorm);
+
+    const idx = Math.round(p * (globalP.length - 1));
+    const x = PAD + globalP[idx] * (W - 2 * PAD);
+    const y = H / 2 - (globalNorm[idx] - 1.0) * SCALE_Y;
+
+    ctx.strokeStyle = "#e53935";
+    ctx.lineWidth = 1.5;
+
+    ctx.beginPath();
+    ctx.moveTo(x, PAD);
+    ctx.lineTo(x, H - PAD);
+    ctx.stroke();
+
+    ctx.fillStyle = "#e53935";
+    ctx.beginPath();
+    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  function updateSingleP(p) {
+    fetch(FormulaState.buildUrl("/analysis/api/ccnr", { p }))
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("ccnr-info").innerText =
+          `||R(rho)||_1 = ${data.ccnr_trace_norm.toFixed(4)}`;
+
+        document.getElementById("ccnr-explain").innerText = data.explanation;
+        document.getElementById("ccnr-guide").innerText =
+          data.ccnr_trace_norm > 1
+            ? `当前解释：p=${p.toFixed(2)} 时 ||R||_1=${data.ccnr_trace_norm.toFixed(3)}，超过 1，CCNR 检测到纠缠。`
+            : `当前解释：p=${p.toFixed(2)} 时 ||R||_1=${data.ccnr_trace_norm.toFixed(3)}，未超过 1，CCNR 未检测到纠缠。`;
+      });
+  }
+
+  function loadScan() {
+    fetch(FormulaState.buildUrl("/analysis/api/ccnr/scan"))
+      .then(res => res.json())
+      .then(data => {
+        drawCurve(data.p, data.ccnr_trace_norm);
+        drawMarker(Number(slider.value));
+      });
+  }
+
+  slider.addEventListener("input", () => {
+    const p = Number(slider.value);
+    pVal.innerText = p.toFixed(2);
+    updateSingleP(p);
+    drawMarker(p);
+  });
+
+  canvas.addEventListener("mousemove", (ev) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = (ev.clientX - rect.left) * (W / rect.width);
+    const y = (ev.clientY - rect.top) * (H / rect.height);
+    const hit = hitStandardLine(x, y);
+    if (hit) showStdTooltip(hit, ev.clientX, ev.clientY);
+    else hideStdTooltip();
+  });
+  canvas.addEventListener("mouseleave", hideStdTooltip);
+
+  if (window.FormulaState) {
+    FormulaState.onChange(() => {
+      loadScan();
+      updateSingleP(Number(slider.value));
+      drawMarker(Number(slider.value));
+    });
+  }
+
+  slider.value = 0.5;
+  pVal.innerText = "0.50";
+  loadScan();
+  updateSingleP(0.5);
+});
+</script>
+{% endblock %}

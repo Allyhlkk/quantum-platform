@@ -1,0 +1,145 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}Entanglement of Formation{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>Entanglement of Formation (形成纠缠度)</h3>
+    $$E_F(\rho) = h\left(\frac{1 + \sqrt{1 - C(\rho)^2}}{2}\right)$$
+  </div>
+  <div class="formula-bound">
+    <span>其中 $h(x)$ 为二元香农熵。形成纠缠度代表制备该量子态所需的平均最大纠缠态（Bell态）的数量。取值范围 [0, 1]。</span>
+  </div>
+</div>
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+  <details open>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+    <p style="color:#d7dbff; line-height:1.75;">形成纠缠度刻画制备该量子态所需的纠缠资源量，数值越大代表“纠缠成本”越高。</p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+    <p style="color:#d7dbff; line-height:1.75;">关注曲线在 y=0 处是否抬升；红色竖线标记当前 p 位置，用于快速读数。</p>
+  </details>
+  <details>
+    <summary style="cursor:pointer; color:#ffd166; font-weight:600;">阈值解释</summary>
+    <p style="color:#d7dbff; line-height:1.75;">EoF = 0 表示可分或接近可分；EoF &gt; 0 表示存在纠缠资源。</p>
+  </details>
+</div>
+
+<div class="card analysis-panel">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <h2>Werner态形成纠缠度扫描 (1D Scan)</h2>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <label for="eof-p" style="margin:0;">p</label>
+        <input id="eof-p" type="range" min="0" max="1" step="0.01" value="0.50" style="width:220px; margin-top:0;">
+        <span id="eof-p-text">0.50</span>
+        <button id="load-btn" onclick="loadFormationData()" style="padding: 8px 16px; cursor: pointer;">
+            ▶ 生成 EoF 曲线
+        </button>
+      </div>
+  </div>
+  <p id="eof-guide" style="margin:8px 0 0 0; color:#aee1ff;">当前解释：等待生成曲线...</p>
+  
+  <p id="loading-text" style="display:none; color: #666; margin-top: 10px;">
+      计算中，请稍候...
+  </p>
+
+  <div id="plot-formation-1d" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+<script>
+let eofData = null;
+
+function nearestIndex(arr, value) {
+    let best = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < arr.length; i++) {
+        const d = Math.abs(arr[i] - value);
+        if (d < bestDist) {
+            best = i;
+            bestDist = d;
+        }
+    }
+    return best;
+}
+
+function renderFormationAt(p) {
+    if (!eofData) return;
+    const idx = nearestIndex(eofData.p, p);
+    const x = eofData.p[idx];
+    const y = eofData.formation[idx];
+    const yMin = Math.min(...eofData.formation);
+    const yMax = Math.max(...eofData.formation);
+
+    const trace = {
+        x: eofData.p,
+        y: eofData.formation,
+        type: "scatter",
+        mode: "lines+markers",
+        line: {color: "#8C564B", width: 3},
+        marker: {size: 5}
+    };
+    const markerTrace = {
+        x: [x],
+        y: [y],
+        type: "scatter",
+        mode: "markers",
+        marker: {size: 10, color: "#ffd166"},
+        name: "当前 p"
+    };
+    const layout = {
+        title: "Entanglement of Formation vs Noise (p)",
+        xaxis: {title: "p (纯态权重)"},
+        yaxis: {title: "E_F(ρ)", range: [-0.05, 1.05]},
+        shapes: [{
+            type: "line",
+            x0: x, x1: x, y0: yMin, y1: yMax,
+            line: {color: "#ff78b4", width: 1.5, dash: "dot"}
+        }],
+        margin: {l: 50, r: 20, b: 50, t: 50}
+    };
+    Plotly.react("plot-formation-1d", [trace, markerTrace], layout, {responsive: true, displayModeBar: false});
+
+    let level = "中等";
+    if (y >= 0.7) level = "较高（制备该态需要较多纠缠资源）";
+    else if (y <= 0.1) level = "较低（接近可分）";
+    document.getElementById("eof-guide").innerText =
+      `当前解释：p=${x.toFixed(2)} 时 EoF=${y.toFixed(3)}，纠缠资源需求${level}。`;
+}
+
+function loadFormationData() {
+    document.getElementById("loading-text").style.display = "block";
+    document.getElementById("load-btn").disabled = true;
+
+    fetch(FormulaState.buildUrl("/analysis/api/formation_scan"))
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("loading-text").style.display = "none";
+            document.getElementById("load-btn").disabled = false;
+            eofData = data;
+            renderFormationAt(Number(document.getElementById("eof-p").value));
+        })
+        .catch(err => {
+            console.error(err);
+            alert("数据加载失败。");
+            document.getElementById("load-btn").disabled = false;
+            document.getElementById("eof-guide").innerText = `当前解释：加载失败（${err.message}）`;
+        });
+}
+
+document.getElementById("eof-p").addEventListener("input", (e) => {
+    const p = Number(e.target.value);
+    document.getElementById("eof-p-text").innerText = p.toFixed(2);
+    renderFormationAt(p);
+});
+
+if (window.FormulaState) {
+    FormulaState.onChange(() => {
+        loadFormationData();
+    });
+}
+</script>
+{% endblock %}

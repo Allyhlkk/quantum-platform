@@ -1,0 +1,203 @@
+{% extends "formulas/formulas_base.html" %}
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>State Fidelity (保真度)</h3>
+    $$F(\rho, \sigma) = \left( \text{Tr} \sqrt{\sqrt{\rho} \sigma \sqrt{\rho}} \right)^2$$
+  </div>
+  <div class="formula-bound">
+    <span>衡量实际制备态与目标态（此处固定为 Bell 态 |Φ+⟩）的重合度。注意：当前 Werner 家族围绕 |Ψ-⟩ 构造，因此本页数值通常整体偏低，这是对照设定而非报错。</span>
+  </div>
+
+  <div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+    <details open>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+      <p style="color:#d7dbff; line-height:1.75;">Fidelity 衡量“当前态”和“目标态”有多接近，值越接近 1，说明两者越相似。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">用途</summary>
+      <p style="color:#d7dbff; line-height:1.75;">常用于量子态制备质量评估，是实验与工程场景中最常见的性能指标之一。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+      <p style="color:#d7dbff; line-height:1.75;">关注曲线是否接近 1 以及随 p 的变化趋势；越高表示越接近目标态。</p>
+    </details>
+  </div>
+</div>
+
+<div class="card analysis-panel">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <h2 id="fid-title">保真度扫描 (1D Scan)</h2>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <label for="fid-p" style="margin:0;">p</label>
+      <input id="fid-p" type="range" min="0" max="1" step="0.01" value="0.50" style="width:220px; margin-top:0;">
+      <span id="fid-p-text">0.50</span>
+      <button id="load-btn" onclick="loadFidelityData()" class="btn-primary">▶ 生成曲线</button>
+    </div>
+  </div>
+  <p id="fid-guide" style="margin:8px 0 0 0; color:#aee1ff;">当前解释：等待生成曲线...</p>
+  <div id="plot-fidelity-1d" style="width: 100%; height: 400px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+<script>
+let fidelityData = null;
+let fidRefreshTimer = null;
+
+const FID_TEXT = {
+  title: "保真度扫描 (1D Scan)",
+  waiting: "当前解释：等待生成曲线...",
+  loading: "当前解释：加载中...",
+  fail: "当前解释：加载失败",
+  relMid: "中位",
+  relHigh: "区间高位",
+  relLow: "区间低位",
+};
+
+function getStateLabel() {
+  if (!window.FormulaState || typeof FormulaState.getType !== "function") return "Werner态";
+  const type = FormulaState.getType();
+  const theta = (typeof FormulaState.getTheta === "function") ? FormulaState.getTheta() : null;
+  if (type === "werner") return "Werner态";
+  if (type === "generalized") return `广义Werner态 (θ=${Number(theta).toFixed(2)})`;
+  if (type === "bell") return "Bell态 |Ψ->";
+  if (type === "pure_theta") return `纯态 |ψ(θ)> (θ=${Number(theta).toFixed(2)})`;
+  return type;
+}
+
+function updateTitle() {
+  const el = document.getElementById("fid-title");
+  if (el) el.innerText = `${FID_TEXT.title} · 当前态：${getStateLabel()}`;
+}
+
+function nearestIndex(arr, value) {
+  let best = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    const d = Math.abs(arr[i] - value);
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  }
+  return best;
+}
+
+function renderFidelityAt(p) {
+  if (!fidelityData) return;
+  const idx = nearestIndex(fidelityData.p, p);
+  const x = fidelityData.p[idx];
+  const y = fidelityData.fidelity[idx];
+  const yMin = Math.min(...fidelityData.fidelity);
+  const yMax = Math.max(...fidelityData.fidelity);
+
+  const line = {
+    x: fidelityData.p,
+    y: fidelityData.fidelity,
+    type: "scatter",
+    mode: "lines",
+    line: {color: "#2CA02C", width: 3},
+    name: "Fidelity"
+  };
+  const marker = {
+    x: [x],
+    y: [y],
+    type: "scatter",
+    mode: "markers",
+    marker: {size: 10, color: "#ffd166"},
+    name: "当前 p"
+  };
+  const layout = {
+    title: "Fidelity vs p",
+    xaxis: {title: "p"},
+    yaxis: {title: "Fidelity", range: [Math.max(0, yMin - 0.05), Math.min(1.05, yMax + 0.05)]},
+    shapes: [{
+      type: "line",
+      x0: x, x1: x, y0: yMin, y1: yMax,
+      line: {color: "#ff78b4", width: 1.5, dash: "dot"}
+    }],
+    margin: {l: 50, r: 20, b: 45, t: 45}
+  };
+  Plotly.react("plot-fidelity-1d", [line, marker], layout, {responsive: true, displayModeBar: false});
+
+  const span = Math.max(1e-9, yMax - yMin);
+  const rel = (y - yMin) / span;
+  let relLevel = FID_TEXT.relMid;
+  if (rel >= 0.67) relLevel = FID_TEXT.relHigh;
+  else if (rel <= 0.33) relLevel = FID_TEXT.relLow;
+
+  let note = "由于目标态固定为 |Φ+>，数值偏低并不一定代表错误。";
+  if (window.FormulaState && typeof FormulaState.getType === "function") {
+    const t = FormulaState.getType();
+    if (t === "werner" || t === "generalized") {
+      note = "由于目标态固定为 |Φ+>，而 Werner 家族围绕 |Ψ-> 构造，整体偏低属于正常现象。";
+    }
+  }
+  const guide = document.getElementById("fid-guide");
+  if (guide) {
+    guide.innerText = `当前解释：p=${x.toFixed(2)} 时 Fidelity=${y.toFixed(3)}（本页区间约 [${yMin.toFixed(3)}, ${yMax.toFixed(3)}]，位于${relLevel}）。${note}`;
+  }
+}
+
+function loadFidelityData() {
+  updateTitle();
+  const guide = document.getElementById("fid-guide");
+  if (guide) guide.innerText = FID_TEXT.loading;
+  let url = (window.FormulaState && typeof FormulaState.buildUrl === "function")
+    ? FormulaState.buildUrl("/analysis/api/fidelity_scan")
+    : "/analysis/api/fidelity_scan";
+  const ts = `__ts=${Date.now()}`;
+  url += (url.includes("?") ? "&" : "?") + ts;
+  fetch(url)
+    .then(res => res.text().then(text => ({ok: res.ok, status: res.status, text})))
+    .then(({ok, status, text}) => {
+      if (!ok) throw new Error(`HTTP ${status}: ${text.slice(0, 160)}`);
+      try { return JSON.parse(text); }
+      catch (e) { throw new Error(`非JSON响应: ${text.slice(0, 160)}`); }
+    })
+    .then(data => {
+      fidelityData = data;
+      const p = Number(document.getElementById("fid-p").value);
+      renderFidelityAt(p);
+    })
+    .catch(err => {
+      console.error(err);
+      if (guide) guide.innerText = `${FID_TEXT.fail}（${err.message || err}）`;
+    });
+}
+
+function triggerFidelityGenerate() {
+  const btn = document.getElementById("load-btn");
+  if (btn && !btn.disabled) {
+    btn.click();
+    return true;
+  }
+  loadFidelityData();
+  return false;
+}
+
+document.getElementById("fid-p").addEventListener("input", (e) => {
+  const p = Number(e.target.value);
+  document.getElementById("fid-p-text").innerText = p.toFixed(2);
+  renderFidelityAt(p);
+});
+
+window.FormulaAutoLoad = triggerFidelityGenerate;
+
+function scheduleFidelityRefresh() {
+  if (fidRefreshTimer) window.clearTimeout(fidRefreshTimer);
+  fidRefreshTimer = window.setTimeout(triggerFidelityGenerate, 80);
+}
+
+function bindStateControls() {
+  const typeSel = document.getElementById("state-type");
+  const thetaInput = document.getElementById("state-theta");
+  if (typeSel) typeSel.addEventListener("change", scheduleFidelityRefresh);
+  if (thetaInput) thetaInput.addEventListener("input", scheduleFidelityRefresh);
+}
+
+bindStateControls();
+updateTitle();
+loadFidelityData();
+</script>
+{% endblock %}

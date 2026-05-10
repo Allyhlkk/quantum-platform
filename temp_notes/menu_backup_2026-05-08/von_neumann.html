@@ -1,0 +1,147 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}Von Neumann Entropy Analysis{% endblock %}
+
+{% block content %}
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>Von Neumann Entropy (冯·诺依曼熵)</h3>
+    $$S(\rho) = -\text{Tr}(\rho \log_2 \rho)$$
+  </div>
+  <div class="formula-bound">
+    <span>量化量子态的混乱程度。取值范围 [0, 2]（针对两比特系统）。值越低越纯净，0 代表完美纯态。</span>
+  </div>
+
+
+<div style="margin-top:12px; border:1px solid rgba(123,108,246,.3); border-radius:10px; background:rgba(8,7,20,.78); padding:10px 12px;">
+    <details open>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">公式意义（它在回答什么）</summary>
+      <p style="color:#d7dbff; line-height:1.75;">Von Neumann 熵衡量态的不确定性与混合程度。熵越大，态越混合；熵越小，态越接近纯态。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">来历与用途</summary>
+      <p style="color:#d7dbff; line-height:1.75;">它是量子信息论中的核心熵定义，可看作 Shannon 熵在量子态上的推广。</p>
+    </details>
+    <details>
+      <summary style="cursor:pointer; color:#ffd166; font-weight:600;">怎么看图</summary>
+      <p style="color:#d7dbff; line-height:1.75;">观察曲线高低和趋势：高熵区域通常对应更强混合；低熵区域更接近纯态。</p>
+    </details>  </div>
+</div>
+
+<div class="card analysis-panel">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+      <h2>Werner态熵值扫描 (1D Scan)</h2>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <label for="vn-p" style="margin:0;">p</label>
+        <input id="vn-p" type="range" min="0" max="1" step="0.01" value="0.50" style="width:220px; margin-top:0;">
+        <span id="vn-p-text">0.50</span>
+        <button id="load-btn" onclick="loadEntropyData()" style="padding: 8px 16px; cursor: pointer;">
+            ▶ 生成熵值曲线
+        </button>
+      </div>
+  </div>
+  <p id="vn-guide" style="margin:8px 0 0 0; color:#aee1ff;">当前解释：等待生成曲线...</p>
+
+  
+  
+  <p id="loading-text" style="display:none; color: #666; margin-top: 10px;">
+      计算中，请稍候...
+  </p>
+
+  <div id="plot-entropy-1d" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+
+<script>
+let vnData = null;
+
+function nearestIndex(arr, value) {
+    let best = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < arr.length; i++) {
+        const d = Math.abs(arr[i] - value);
+        if (d < bestDist) {
+            best = i;
+            bestDist = d;
+        }
+    }
+    return best;
+}
+
+function renderEntropyAt(p) {
+    if (!vnData) return;
+    const idx = nearestIndex(vnData.p, p);
+    const x = vnData.p[idx];
+    const y = vnData.von_neumann[idx];
+    const yMin = Math.min(...vnData.von_neumann);
+    const yMax = Math.max(...vnData.von_neumann);
+
+    const trace = {
+        x: vnData.p,
+        y: vnData.von_neumann,
+        type: "scatter",
+        mode: "lines+markers",
+        line: {color: "#FF7F0E", width: 3},
+        marker: {size: 5}
+    };
+    const markerTrace = {
+        x: [x],
+        y: [y],
+        type: "scatter",
+        mode: "markers",
+        marker: {size: 10, color: "#ffd166"},
+        name: "当前 p"
+    };
+    const layout = {
+        title: "Von Neumann Entropy vs Noise Parameter (p)",
+        xaxis: {title: "p (纯态权重)"},
+        yaxis: {title: "Entropy S(ρ)", range: [0, 2.1]},
+        shapes: [{
+            type: "line",
+            x0: x, x1: x, y0: yMin, y1: yMax,
+            line: {color: "#ff78b4", width: 1.5, dash: "dot"}
+        }],
+        margin: {l: 50, r: 20, b: 50, t: 50}
+    };
+    Plotly.react("plot-entropy-1d", [trace, markerTrace], layout, {responsive: true, displayModeBar: false});
+
+    let level = "中等混合";
+    if (y <= 0.3) level = "接近纯态";
+    else if (y >= 1.5) level = "混合度较高";
+    document.getElementById("vn-guide").innerText =
+      `当前解释：p=${x.toFixed(2)} 时 S(ρ)=${y.toFixed(3)}，系统${level}。`;
+}
+
+function loadEntropyData() {
+    document.getElementById("loading-text").style.display = "block";
+    document.getElementById("load-btn").disabled = true;
+
+    fetch(FormulaState.buildUrl("/analysis/api/von_neumann_scan"))
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("loading-text").style.display = "none";
+            document.getElementById("load-btn").disabled = false;
+            vnData = data;
+            renderEntropyAt(Number(document.getElementById("vn-p").value));
+        })
+        .catch(err => {
+            console.error(err);
+            alert("数据加载失败，请检查后端路由。");
+            document.getElementById("load-btn").disabled = false;
+            document.getElementById("vn-guide").innerText = `当前解释：加载失败（${err.message}）`;
+        });
+}
+
+document.getElementById("vn-p").addEventListener("input", (e) => {
+    const p = Number(e.target.value);
+    document.getElementById("vn-p-text").innerText = p.toFixed(2);
+    renderEntropyAt(p);
+});
+
+if (window.FormulaState) {
+    FormulaState.onChange(() => {
+        loadEntropyData();
+    });
+}
+</script>
+{% endblock %}

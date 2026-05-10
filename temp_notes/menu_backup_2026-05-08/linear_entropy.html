@@ -1,0 +1,326 @@
+{% extends "formulas/formulas_base.html" %}
+{% block title %}Linear Entropy{% endblock %}
+
+{% block content %}
+<style>
+  .ls-panel {
+    border: 1px solid rgba(123, 108, 246, 0.35);
+    border-radius: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(18, 15, 39, 0.92), rgba(10, 9, 24, 0.92));
+    box-shadow: inset 0 0 26px rgba(123, 108, 246, 0.12), 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  .ctrls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .ctrls input[type="number"] {
+    width: 110px;
+    margin-top: 0;
+  }
+
+  .kpi-grid {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .kpi {
+    border: 1px solid rgba(123, 108, 246, 0.32);
+    border-radius: 10px;
+    padding: 10px;
+    background: rgba(8, 7, 20, 0.8);
+  }
+
+  .kpi .label { color: #aab1d8; font-size: 12px; }
+  .kpi .val { margin-top: 4px; font-size: 20px; color: #fff; text-shadow: 0 0 12px rgba(123,108,246,0.45); }
+
+  .plot-grid {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .plot-box {
+    min-height: 340px;
+    border: 1px solid rgba(255, 120, 180, 0.25);
+    border-radius: 10px;
+    background: rgba(8, 7, 20, 0.82);
+  }
+
+  .edu-box {
+    margin-top: 12px;
+    border: 1px solid rgba(123, 108, 246, 0.3);
+    border-radius: 10px;
+    background: rgba(8, 7, 20, 0.78);
+    padding: 10px 12px;
+  }
+
+  .edu-box details {
+    margin: 6px 0;
+  }
+
+  .edu-box summary {
+    cursor: pointer;
+    color: #ffd166;
+    font-weight: 600;
+  }
+
+  .edu-box p {
+    color: #d7dbff;
+    font-size: 14px;
+    line-height: 1.75;
+    margin: 6px 0;
+  }
+
+  @media (max-width: 960px) {
+    .plot-grid { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="formula-panel">
+  <div class="formula-block">
+    <h3>Linear Entropy & Entanglement Phase Portrait</h3>
+    $$S_L(\rho)=1-\mathrm{Tr}(\rho^2)$$
+    $$S_L=0\ \text{for pure state},\quad S_L>0\ \text{for mixed state}$$
+  </div>
+  <div class="formula-bound">
+    <span>Compare mixedness (S_L) with entanglement (Concurrence)</span>
+  </div>
+</div>
+
+<div class="edu-box">
+    <details open>
+      <summary>公式意义（它在回答什么）</summary>
+      <p>
+        线性熵 S_L 衡量“量子态有多混合”。S_L=0 表示纯态；S_L 越大，说明态越混合（信息越“散”）。
+      </p>
+    </details>
+    <details>
+      <summary>用途（为什么和纠缠一起看）</summary>
+      <p>
+        Concurrence 衡量纠缠强度，S_L 衡量混合度。两者一起看，可以回答：
+        “这个态是因为噪声变混了，还是仍保留较强纠缠？”
+      </p>
+    </details>
+    <details>
+      <summary>怎么看图（建议顺序）</summary>
+      <p>
+        先看左上 1D 曲线（同一个 p 下 S_L 与 C 的变化）；再看右上相图轨迹；
+        最后看下方两张热图，比较不同 (p,theta) 区域的混合度与纠缠分布。
+      </p>
+    </details>  </div>
+
+<div class="card analysis-panel ls-panel">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <h2 style="margin:0;">Linear Entropy Visual Lab</h2>
+    <div class="ctrls">
+      <label for="p-slider" style="margin:0;">p</label>
+      <input id="p-slider" type="range" min="0" max="1" step="0.01" value="0.50" style="width:160px; margin-top:0;">
+      <span id="p-text">0.50</span>
+      <label for="resolution" style="margin:0;">resolution</label>
+      <input id="resolution" type="number" min="10" max="100" step="5" value="30">
+      <button id="load-phase-btn" style="margin-top:0;">Load Phase Map</button>
+    </div>
+  </div>
+  <p id="ls-interpret" style="margin-top:8px; color:#aee1ff;">当前解释：等待数据...</p>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="label">S_L @ p</div><div class="val" id="kpi-sl">-</div></div>
+    <div class="kpi"><div class="label">Concurrence @ p</div><div class="val" id="kpi-c">-</div></div>
+    <div class="kpi"><div class="label">State Type</div><div class="val" id="kpi-type">-</div></div>
+  </div>
+
+  
+
+  <div class="plot-grid">
+    <div id="plot-curve" class="plot-box"></div>
+    <div id="plot-phase-portrait" class="plot-box"></div>
+  </div>
+  <div class="plot-grid">
+    <div id="plot-heat-sl" class="plot-box"></div>
+    <div id="plot-heat-c" class="plot-box"></div>
+  </div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+<script>
+let scanData = null;
+let phaseData = null;
+
+const darkLayout = {
+  paper_bgcolor: "rgba(0,0,0,0)",
+  plot_bgcolor: "rgba(0,0,0,0)",
+  font: {color: "#dde2ff"},
+  margin: {l: 50, r: 20, t: 45, b: 45}
+};
+
+function fmt(v, n=4) { return Number(v).toFixed(n); }
+
+function renderCurve(data, p) {
+  const sl = {
+    x: data.p,
+    y: data.linear_entropy,
+    mode: "lines",
+    name: "S_L",
+    line: {color: "#7ad1ff", width: 2}
+  };
+  const c = {
+    x: data.p,
+    y: data.concurrence,
+    mode: "lines",
+    name: "Concurrence",
+    yaxis: "y2",
+    line: {color: "#ff78b4", width: 2}
+  };
+  const idx = Math.round(p * (data.p.length - 1));
+  const marker = {
+    x: [data.p[idx]],
+    y: [data.linear_entropy[idx]],
+    mode: "markers",
+    name: "current p",
+    marker: {size: 9, color: "#ffd166"}
+  };
+  const layout = {
+    ...darkLayout,
+    title: "Werner 1D: S_L and Concurrence",
+    xaxis: {title: "p"},
+    yaxis: {title: "S_L"},
+    yaxis2: {title: "Concurrence", overlaying: "y", side: "right"},
+    legend: {orientation: "h", y: 1.12}
+  };
+  Plotly.newPlot("plot-curve", [sl, c, marker], layout, {displayModeBar: false, responsive: true});
+}
+
+function renderPhasePortrait(data, p) {
+  const curve = data.werner_curve;
+  const line = {
+    x: curve.linear_entropy,
+    y: curve.concurrence,
+    mode: "lines",
+    name: "Werner trajectory",
+    line: {color: "#7ad1ff", width: 2}
+  };
+  const idx = Math.round(p * (curve.p.length - 1));
+  const marker = {
+    x: [curve.linear_entropy[idx]],
+    y: [curve.concurrence[idx]],
+    mode: "markers",
+    name: "current p",
+    marker: {size: 10, color: "#ff78b4"}
+  };
+  const layout = {
+    ...darkLayout,
+    title: "Phase Portrait: (S_L, Concurrence)",
+    xaxis: {title: "S_L"},
+    yaxis: {title: "Concurrence", range: [0, 1.02]}
+  };
+  Plotly.newPlot("plot-phase-portrait", [line, marker], layout, {displayModeBar: false, responsive: true});
+}
+
+function renderHeatmaps(data) {
+  const hmSL = {
+    x: data.x,
+    y: data.y,
+    z: data.linear_entropy,
+    type: "heatmap",
+    colorscale: "Viridis",
+    colorbar: {title: "S_L"},
+    hovertemplate: "p=%{x}<br>theta=%{y}<br>S_L=%{z:.4f}<extra></extra>"
+  };
+  const hmC = {
+    x: data.x,
+    y: data.y,
+    z: data.concurrence,
+    type: "heatmap",
+    colorscale: "Plasma",
+    colorbar: {title: "C"},
+    hovertemplate: "p=%{x}<br>theta=%{y}<br>C=%{z:.4f}<extra></extra>"
+  };
+  const l1 = { ...darkLayout, title: "Generalized Werner: Linear Entropy Map", xaxis: {title: "p"}, yaxis: {title: "theta (rad)"} };
+  const l2 = { ...darkLayout, title: "Generalized Werner: Concurrence Map", xaxis: {title: "p"}, yaxis: {title: "theta (rad)"} };
+  Plotly.newPlot("plot-heat-sl", [hmSL], l1, {displayModeBar: false, responsive: true});
+  Plotly.newPlot("plot-heat-c", [hmC], l2, {displayModeBar: false, responsive: true});
+}
+
+function loadSingleP(p) {
+  fetch(FormulaState.buildUrl("/analysis/api/linear_entropy", { p }))
+    .then(r => r.json())
+    .then(d => {
+      if (d.error) throw new Error(d.error);
+      document.getElementById("kpi-sl").innerText = fmt(d.linear_entropy, 4);
+      document.getElementById("kpi-type").innerText = d.is_pure ? "Pure" : "Mixed";
+      document.getElementById("ls-interpret").innerText = d.is_pure
+        ? `当前解释：p=${fmt(p,2)} 时 S_L 接近 0，系统更接近纯态。`
+        : `当前解释：p=${fmt(p,2)} 时 S_L=${fmt(d.linear_entropy,3)}，系统处于混合态。请结合 C 一起判断“混合但是否仍纠缠”。`;
+    })
+    .catch(e => {
+      document.getElementById("kpi-type").innerText = `Err: ${e.message}`;
+      document.getElementById("ls-interpret").innerText = `当前解释：加载失败（${e.message}）`;
+    });
+}
+
+function loadScan(p) {
+  fetch(FormulaState.buildUrl("/analysis/api/linear_entropy/scan", { step: 0.01 }))
+    .then(r => r.json())
+    .then(d => {
+      if (d.error) throw new Error(d.error);
+      scanData = d;
+      renderCurve(d, p);
+      const idx = Math.round(p * (d.p.length - 1));
+      document.getElementById("kpi-c").innerText = fmt(d.concurrence[idx], 4);
+    });
+}
+
+function loadPhase(p) {
+  const resolution = Number(document.getElementById("resolution").value || 30);
+  fetch(`/analysis/api/linear_entropy/phase?resolution=${resolution}`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.error) throw new Error(d.error);
+      phaseData = d;
+      renderHeatmaps(d);
+      renderPhasePortrait(d, p);
+    })
+    .catch(e => alert(`Load phase failed: ${e.message}`));
+}
+
+document.getElementById("p-slider").addEventListener("input", (e) => {
+  const p = Number(e.target.value);
+  document.getElementById("p-text").innerText = fmt(p, 2);
+  loadSingleP(p);
+  if (scanData) {
+    renderCurve(scanData, p);
+    const idx = Math.round(p * (scanData.p.length - 1));
+    document.getElementById("kpi-c").innerText = fmt(scanData.concurrence[idx], 4);
+  }
+  if (phaseData) renderPhasePortrait(phaseData, p);
+});
+
+if (window.FormulaState) {
+  FormulaState.onChange(() => {
+    const p = Number(document.getElementById("p-slider").value);
+    loadScan(p);
+    loadSingleP(p);
+  });
+}
+
+document.getElementById("load-phase-btn").addEventListener("click", () => {
+  const p = Number(document.getElementById("p-slider").value);
+  loadPhase(p);
+});
+
+const p0 = 0.5;
+document.getElementById("p-text").innerText = fmt(p0, 2);
+loadSingleP(p0);
+loadScan(p0);
+loadPhase(p0);
+</script>
+{% endblock %}
